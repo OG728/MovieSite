@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CineStream - Home</title>
+    <title>CineStream - TV Shows</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -12,39 +12,36 @@
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body data-page="home">
+  <body data-page="tv">
     <div class="background-glow" aria-hidden="true"></div>
     <header class="topbar">
       <div class="topbar-inner">
         <a class="brand" href="index.html">CineStream</a>
         <nav class="main-nav" aria-label="Primary">
-          <a class="nav-link is-active" href="index.html">Home</a>
+          <a class="nav-link" href="index.html">Home</a>
           <a class="nav-link" href="movies.html">Movies</a>
-          <a class="nav-link" href="tv.html">TV Shows</a>
+          <a class="nav-link is-active" href="tv.html">TV Shows</a>
         </nav>
       </div>
     </header>
 
     <header class="site-header">
-      <h1>Home</h1>
-      <p>Browse the latest movies and TV shows, then open a dedicated watch page.</p>
+      <h1>TV Shows</h1>
+      <p>A dedicated page with only TV shows.</p>
       <div class="search-wrap">
-        <label for="search" class="sr-only">Search titles</label>
-        <input id="search" type="search" placeholder="Search by title or description..." />
+        <label for="search" class="sr-only">Search TV shows</label>
+        <input id="search" type="search" placeholder="Search TV shows..." />
       </div>
     </header>
 
     <main>
-      <section id="status" class="status">Loading catalog…</section>
+      <section id="status" class="status">Loading TV shows…</section>
       <section class="view-panel">
         <section>
-          <h2 class="section-title">Latest Movies</h2>
-          <div id="latest-movies-grid" class="media-grid" aria-live="polite"></div>
+          <h2 class="section-title">TV Show Library</h2>
+          <div id="tv-grid" class="media-grid" aria-live="polite"></div>
         </section>
-        <section>
-          <h2 class="section-title">Latest TV Shows</h2>
-          <div id="latest-tv-grid" class="media-grid" aria-live="polite"></div>
-        </section>
+        <button id="load-more" class="load-more" type="button">Load more</button>
       </section>
     </main>
 
