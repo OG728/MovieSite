@@ -82,7 +82,7 @@ main {
 .movie-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
 .movie-card {
@@ -135,7 +135,6 @@ main {
   display: block;
 }
 
-
 .open-player {
   color: var(--accent-2);
   display: inline-block;
@@ -149,8 +148,6 @@ main {
   text-decoration: underline;
 }
 
-=======
-
 .sr-only {
   position: absolute;
   width: 1px;
@@ -160,4 +157,23 @@ main {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
+}
+
+
+@media (max-width: 640px) {
+  .site-header {
+    padding: 2rem 0.9rem 1.5rem;
+  }
+
+  main {
+    padding: 0 0.9rem 2rem;
+  }
+
+  .movie-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .poster-wrap {
+    height: 160px;
+  }
 }
