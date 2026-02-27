@@ -37,40 +37,25 @@
     <main>
       <section id="status" class="status">Loading catalog…</section>
 
-      <section id="home-view" class="view-panel" data-view="home">
-        <section>
-          <h2 class="section-title">Latest Movies</h2>
-          <div id="latest-movies-grid" class="media-grid" aria-live="polite"></div>
-        </section>
-        <section>
-          <h2 class="section-title">Latest TV Shows</h2>
-          <div id="latest-tv-grid" class="media-grid" aria-live="polite"></div>
-        </section>
-      </section>
-
-      <section id="movies-view" class="view-panel" data-view="movies" hidden>
-        <h2 class="section-title">Movies</h2>
-        <div id="movies-grid" class="media-grid" aria-live="polite"></div>
-      </section>
-
-      <section id="tv-view" class="view-panel" data-view="tv" hidden>
-        <h2 class="section-title">TV Shows</h2>
-        <div id="tv-grid" class="media-grid" aria-live="polite"></div>
-      </section>
-    </main>
-
-    <template id="media-template">
-      <article class="media-card">
-        <button class="poster-button" type="button">
-          <div class="poster-wrap">
-            <img class="poster" alt="" loading="lazy" />
-            <span class="play-badge" aria-hidden="true">▶ Watch</span>
+    <template id="movie-template">
+      <article class="movie-card">
+        <div class="poster-wrap">
+          <img class="poster" alt="" loading="lazy" />
+        </div>
+        <div class="movie-content">
+          <h2 class="movie-title"></h2>
+          <p class="movie-description"></p>
+          <div class="player-wrap">
+            <iframe
+              class="movie-frame"
+              loading="lazy"
+              referrerpolicy="origin-when-cross-origin"
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+              allowfullscreen
+              title="Movie player"
+            ></iframe>
           </div>
-        </button>
-        <div class="media-content">
-          <h3 class="media-title"></h3>
-          <p class="media-description"></p>
-          <a class="watch-link">Open watch page</a>
+          <a class="open-player" target="_blank" rel="noopener noreferrer">Open player in new tab</a>
         </div>
       </article>
     </template>
