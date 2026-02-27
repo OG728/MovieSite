@@ -7,8 +7,8 @@ const APP_LOG_PREFIX = "[CineStream]";
 
 // Optional: paste TMDB credentials directly in these constants.
 // This is useful if you do not want to set window vars/localStorage manually.
-const HARDCODED_TMDB_API_KEY = "8e8d091a87218e8fa084531dedd4b01c";
-const HARDCODED_TMDB_BEARER_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4ZThkMDkxYTg3MjE4ZThmYTA4NDUzMWRlZGQ0YjAxYyIsIm5iZiI6MTc3MjE4NjM1Mi43NDgsInN1YiI6IjY5YTE2YWYwYmY0MjNhZDAzYjA5ZGI5ZiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.FygW_6KXrCB9H6tCRznF7YkN54Fd4OyxZu0iNxvryXQ";
+const HARDCODED_TMDB_API_KEY = "";
+const HARDCODED_TMDB_BEARER_TOKEN = "";
 
 const TMDB_API_KEY =
   window.CINESTREAM_TMDB_API_KEY ||
@@ -287,7 +287,7 @@ function buildMediaCard(item, template) {
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.className = 'poster-blur-overlay';
-    overlay.textContent = 'Play';
+    overlay.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" width="56" height="56" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>';
     poster.parentNode.appendChild(overlay);
   }
   const watchLink = node.querySelector(".watch-link");
@@ -432,6 +432,186 @@ function sourceLabel(state) {
   return "local";
 }
 
+function heroBackdropFromItem(item) {
+  if (!item?.poster) return FALLBACK_POSTER;
+  if (item.poster.includes("/w500/")) {
+    return item.poster.replace("/w500/", "/original/");
+  }
+  return item.poster;
+}
+
+function initHeroSlideshow(items) {
+  const hero = document.getElementById("hero-slideshow");
+  const track = hero?.querySelector("#hero-track");
+  if (!hero || !track || !items.length) return;
+
+  const featured = items.slice(0, 5);
+  let activeIndex = 0;
+  const TRANSITION_MS = 850;
+  const DRAG_THRESHOLD_PCT = 0.12;
+  const MIN_DRAG_THRESHOLD_PX = 70;
+  const DRAG_START_THRESHOLD_PX = 8;
+  let isAnimating = false;
+  let dragState = null;
+  let activePointerId = null;
+  let suppressClickUntil = 0;
+
+  const normalizeIndex = (index) => {
+    if (index < 0) return featured.length - 1;
+    if (index >= featured.length) return 0;
+    return index;
+  };
+
+  const relativeOffset = (index) => {
+    let rel = index - activeIndex;
+    const half = Math.floor(featured.length / 2);
+    if (rel > half) rel -= featured.length;
+    if (rel < -half) rel += featured.length;
+    return rel;
+  };
+
+  const createSlide = (movie) => {
+    const slide = document.createElement("article");
+    slide.className = "hero-slide";
+    const watchUrl = buildWatchPageUrl("movie", movie);
+    const ratingChip =
+      movie.rating !== null && movie.rating !== undefined
+        ? `<span class="hero-chip">Rating ${movie.rating.toFixed(1)}/10</span>`
+        : "";
+    slide.innerHTML = `
+      <div class="hero-slide-media" style="background-image:url('${heroBackdropFromItem(movie)}')"></div>
+      <div class="hero-slide-content">
+        <h1 class="hero-title">${movie.title || "Untitled"}</h1>
+        <div class="hero-meta">${ratingChip}<span class="hero-chip">Movie</span></div>
+        <p class="hero-description">${movie.description || "No description available."}</p>
+        <div class="hero-actions">
+          <a class="hero-play" href="${watchUrl}">
+            <span class="hero-play-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+            </span>
+            <span>Play</span>
+          </a>
+          <a class="hero-more" href="search.html">See More</a>
+        </div>
+      </div>
+    `;
+    return slide;
+  };
+
+  const slides = featured.map(createSlide);
+  track.replaceChildren(...slides);
+
+  const positionSlides = (dragPx = 0, animate = false) => {
+    const width = Math.max(hero.clientWidth, 1);
+    const deltaPct = (dragPx / width) * 100;
+    slides.forEach((slide, index) => {
+      if (animate) slide.classList.add("animating");
+      else slide.classList.remove("animating");
+      const rel = relativeOffset(index);
+      const xPct = rel * 100 + deltaPct;
+      slide.style.transform = `translateX(${xPct}%)`;
+      slide.style.opacity = Math.abs(rel) <= 1 ? "1" : "0";
+      slide.style.pointerEvents = rel === 0 ? "auto" : "none";
+      slide.style.zIndex = String(10 - Math.abs(rel));
+    });
+  };
+
+  const clearIntervalTimer = () => {
+    if (window._heroSlideshowInterval) {
+      window.clearInterval(window._heroSlideshowInterval);
+    }
+  };
+
+  const startIntervalTimer = () => {
+    clearIntervalTimer();
+    if (featured.length < 2) return;
+    window._heroSlideshowInterval = window.setInterval(() => {
+      if (isAnimating || dragState) return;
+      activeIndex = normalizeIndex(activeIndex + 1);
+      isAnimating = true;
+      positionSlides(0, true);
+      window.setTimeout(() => {
+        isAnimating = false;
+        positionSlides(0, false);
+      }, TRANSITION_MS + 20);
+    }, 5000);
+  };
+
+  const onPointerDown = (event) => {
+    if (featured.length < 2 || isAnimating) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (event.target?.closest("a, button")) return;
+    dragState = { startX: event.clientX, dx: 0, engaged: false };
+    activePointerId = event.pointerId;
+    hero.setPointerCapture(event.pointerId);
+    clearIntervalTimer();
+  };
+
+  const onPointerMove = (event) => {
+    if (!dragState || event.pointerId !== activePointerId) return;
+    dragState.dx = event.clientX - dragState.startX;
+    if (!dragState.engaged) {
+      if (Math.abs(dragState.dx) < DRAG_START_THRESHOLD_PX) return;
+      dragState.engaged = true;
+      hero.classList.add("is-dragging");
+    }
+    positionSlides(dragState.dx, false);
+  };
+
+  const endDrag = (event) => {
+    if (!dragState || event.pointerId !== activePointerId) return;
+    const dx = dragState.dx;
+    const wasEngaged = dragState.engaged;
+    const width = Math.max(hero.clientWidth, 1);
+    const threshold = Math.max(MIN_DRAG_THRESHOLD_PX, width * DRAG_THRESHOLD_PCT);
+    dragState = null;
+    activePointerId = null;
+    hero.classList.remove("is-dragging");
+    if (event?.pointerId !== undefined) {
+      hero.releasePointerCapture(event.pointerId);
+    }
+
+    if (!wasEngaged) {
+      startIntervalTimer();
+      return;
+    }
+
+    isAnimating = true;
+    positionSlides(0, true);
+    if (Math.abs(dx) >= threshold) {
+      suppressClickUntil = Date.now() + 250;
+      activeIndex = normalizeIndex(activeIndex + (dx < 0 ? 1 : -1));
+      positionSlides(0, true);
+    }
+    window.setTimeout(() => {
+      isAnimating = false;
+      positionSlides(0, false);
+    }, TRANSITION_MS + 20);
+
+    startIntervalTimer();
+  };
+
+  hero.addEventListener("click", (event) => {
+    if (Date.now() < suppressClickUntil && event.target?.closest("a")) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
+
+  hero.addEventListener("pointerdown", onPointerDown);
+  hero.addEventListener("pointermove", onPointerMove);
+  hero.addEventListener("pointerup", endDrag);
+  hero.addEventListener("pointercancel", endDrag);
+  hero.addEventListener("pointerleave", (event) => {
+    if (dragState && event.pointerType === "mouse") {
+      endDrag(event);
+    }
+  });
+
+  positionSlides(0, false);
+  startIntervalTimer();
+}
+
 async function initHomePage(template, statusEl, searchEl) {
   const latestMoviesGrid = document.getElementById("latest-movies-grid");
   const latestTvGrid = document.getElementById("latest-tv-grid");
@@ -446,6 +626,7 @@ async function initHomePage(template, statusEl, searchEl) {
     await loadNextPage(movieState);
   }
   const latestMovies = movieState.items.slice(0, 24);
+  initHeroSlideshow(latestMovies);
   renderList(latestMovies, latestMoviesGrid, template);
 
   // Load more pages if needed to get at least 24 TV shows

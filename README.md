@@ -1,6 +1,6 @@
 # CineStream
 
-CineStream is a lightweight, Cineby-inspired browsing interface with:
+CineStream is a lightweight, movie browsing interface with:
 
 - A cinematic dark UI
 - Separate pages for `Home`, `Movies`, and `TV Shows`

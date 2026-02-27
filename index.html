@@ -4,12 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CineStream - Home</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body data-page="home">
@@ -26,10 +20,12 @@
       </div>
     </header>
 
-    <header class="site-header">
-      <h1>Home</h1>
-      <p>Browse the latest movies and TV shows, then open a dedicated watch page.</p>
-    </header>
+    <section id="hero-slideshow" class="hero-slideshow" aria-label="Featured movies">
+      <div id="hero-track" class="hero-track" aria-live="polite">
+        <!-- Slides are injected by app.js -->
+      </div>
+      <div class="hero-fade" aria-hidden="true"></div>
+    </section>
 
     <main>
       <section id="status" class="status" style="display:none">Loading catalog…</section>
