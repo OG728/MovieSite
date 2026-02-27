@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CineStream</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="background-glow" aria-hidden="true"></div>
+    <header class="site-header">
+      <h1>CineStream</h1>
+      <p>Movie browsing UI inspired by Cineby with vidsrc.to embedded playback.</p>
+      <div class="search-wrap">
+        <label for="search" class="sr-only">Search movies</label>
+        <input id="search" type="search" placeholder="Search by title or description..." />
+      </div>
+    </header>
+
+    <main>
+      <section id="status" class="status">Loading films…</section>
+      <section id="movie-grid" class="movie-grid" aria-live="polite"></section>
+    </main>
+
+    <template id="movie-template">
+      <article class="movie-card">
+        <div class="poster-wrap">
+          <img class="poster" alt="" loading="lazy" />
+        </div>
+        <div class="movie-content">
+          <h2 class="movie-title"></h2>
+          <p class="movie-description"></p>
+          <div class="player-wrap">
+            <iframe
+              class="movie-frame"
+              loading="lazy"
+              referrerpolicy="origin"
+              allowfullscreen
+              title="Movie player"
+            ></iframe>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
