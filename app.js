@@ -194,6 +194,17 @@ function initApp() {
   searchEl.addEventListener("input", (event) => {
     render(event.target.value.trim().toLowerCase());
   });
+
+  if (view === "movies") {
+    viewTitle.textContent = "Movies";
+    viewDescription.textContent = "Browse our movie collection and open each title on its own watch page.";
+  } else if (view === "tv") {
+    viewTitle.textContent = "TV Shows";
+    viewDescription.textContent = "Browse TV shows and open each series in a dedicated player page.";
+  } else {
+    viewTitle.textContent = "Home";
+    viewDescription.textContent = "Browse the latest movies and TV shows, then open a dedicated watch page.";
+  }
 }
 
 window.addEventListener("DOMContentLoaded", initApp);
