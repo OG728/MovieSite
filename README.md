@@ -3,38 +3,34 @@
 CineStream is a lightweight, Cineby-inspired browsing interface with:
 
 - A cinematic dark UI
-- A top navigation bar (`Home`, `Movies`, `TV Shows`)
+- Separate pages for `Home`, `Movies`, and `TV Shows`
 - A home feed split into **Latest Movies** and **Latest TV Shows**
-- Dedicated watch pages (player moved off the homepage)
+- Dedicated watch pages for playback (`player.html`)
 
 ## Project Structure
 
-- `index.html` – main catalog page with top nav and list sections
+- `index.html` – Home page with latest movies and latest TV shows
+- `movies.html` – Movies-only page
+- `tv.html` – TV-shows-only page
 - `player.html` – dedicated player page for a selected movie/show
 - `styles.css` – styling for catalog and player layouts
-- `app.js` – catalog data, rendering, search, and navigation state
+- `app.js` – catalog data, rendering, and per-page search behavior
 - `player.js` – player-page URL parsing and embed setup
 
 ## How to Run Locally
-
-Because this is a static site, run any local web server.
-
-### Option 1: Python (recommended)
 
 ```bash
 python3 -m http.server 4173
 ```
 
-Then open:
-
-- `http://localhost:4173`
+Then open `http://localhost:4173`.
 
 ## Usage
 
-1. Open the site in your browser.
-2. Use the top bar to switch between Home, Movies, and TV Shows.
-3. Click a poster or "Open watch page" to go to a dedicated player page.
-4. On the player page, use the fallback "Open ... in a new tab" link if needed.
+1. Open the site.
+2. Use the top nav to go to **Home**, **Movies**, or **TV Shows**.
+3. Movies page shows only movies, TV Shows page shows only TV series.
+4. Click a poster or "Open watch page" to open the dedicated player page.
 
 ## Notes
 

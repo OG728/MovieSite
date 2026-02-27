@@ -139,15 +139,60 @@ function renderList(items, type, target, template) {
   target.replaceChildren(...cards);
 }
 
-function setView(view, elements) {
-  const { panels, navLinks, viewTitle, viewDescription } = elements;
+function filterItems(items, query) {
+  if (!query) {
+    return items;
+  }
 
-  panels.forEach((panel) => {
-    panel.hidden = panel.dataset.view !== view;
-  });
+  return items.filter(
+    (item) => item.title.toLowerCase().includes(query) || item.description.toLowerCase().includes(query)
+  );
+}
 
-  navLinks.forEach((link) => {
-    link.classList.toggle("is-active", link.dataset.viewLink === view);
+function initApp() {
+  const page = document.body.dataset.page;
+  const template = document.getElementById("media-template");
+  const searchEl = document.getElementById("search");
+  const statusEl = document.getElementById("status");
+
+  if (!page || !template || !template.content.firstElementChild || !searchEl || !statusEl) {
+    return;
+  }
+
+  const latestMoviesGrid = document.getElementById("latest-movies-grid");
+  const latestTvGrid = document.getElementById("latest-tv-grid");
+  const moviesGrid = document.getElementById("movies-grid");
+  const tvGrid = document.getElementById("tv-grid");
+
+  const render = (query) => {
+    if (page === "movies") {
+      const filteredMovies = filterItems(movies, query);
+      renderList(filteredMovies, "movie", moviesGrid, template);
+      statusEl.textContent = filteredMovies.length
+        ? `Showing ${filteredMovies.length} movie${filteredMovies.length === 1 ? "" : "s"}.`
+        : "No movie matches found.";
+      return;
+    }
+
+    if (page === "tv") {
+      const filteredTv = filterItems(tvShows, query);
+      renderList(filteredTv, "tv", tvGrid, template);
+      statusEl.textContent = filteredTv.length
+        ? `Showing ${filteredTv.length} TV show${filteredTv.length === 1 ? "" : "s"}.`
+        : "No TV show matches found.";
+      return;
+    }
+
+    const latestMovies = filterItems(movies.slice(0, 4), query);
+    const latestTv = filterItems(tvShows.slice(0, 4), query);
+    renderList(latestMovies, "movie", latestMoviesGrid, template);
+    renderList(latestTv, "tv", latestTvGrid, template);
+    statusEl.textContent = `Home: ${latestMovies.length} latest movie${latestMovies.length === 1 ? "" : "s"} and ${latestTv.length} latest TV show${latestTv.length === 1 ? "" : "s"}.`;
+  };
+
+  render("");
+  searchEl.addEventListener("input", (event) => {
+    render(event.target.value.trim().toLowerCase());
   });
 
   if (view === "movies") {
@@ -160,111 +205,6 @@ function setView(view, elements) {
     viewTitle.textContent = "Home";
     viewDescription.textContent = "Browse the latest movies and TV shows, then open a dedicated watch page.";
   }
-}
-
-function getFilteredItems(items, query) {
-  if (!query) {
-    return items;
-  }
-
-  return items.filter(
-    (item) => item.title.toLowerCase().includes(query) || item.description.toLowerCase().includes(query)
-  );
-}
-
-function updateView(view, query, elements) {
-  const { statusEl, template, latestMoviesGrid, latestTvGrid, moviesGrid, tvGrid } = elements;
-
-  const latestMovies = getFilteredItems(movies.slice(0, 4), query);
-  const latestTv = getFilteredItems(tvShows.slice(0, 4), query);
-  const allMovies = getFilteredItems(movies, query);
-  const allTv = getFilteredItems(tvShows, query);
-
-  if (view === "movies") {
-    renderList(allMovies, "movie", moviesGrid, template);
-    statusEl.textContent = allMovies.length
-      ? `Showing ${allMovies.length} movie${allMovies.length === 1 ? "" : "s"}.`
-      : "No movie matches found.";
-    return;
-  }
-
-  if (view === "tv") {
-    renderList(allTv, "tv", tvGrid, template);
-    statusEl.textContent = allTv.length
-      ? `Showing ${allTv.length} TV show${allTv.length === 1 ? "" : "s"}.`
-      : "No TV show matches found.";
-    return;
-  }
-
-  renderList(latestMovies, "movie", latestMoviesGrid, template);
-  renderList(latestTv, "tv", latestTvGrid, template);
-  statusEl.textContent = `Home: ${latestMovies.length} latest movie${latestMovies.length === 1 ? "" : "s"} and ${latestTv.length} latest TV show${latestTv.length === 1 ? "" : "s"}.`;
-}
-
-function initApp() {
-  const template = document.getElementById("media-template");
-  const searchEl = document.getElementById("search");
-  const statusEl = document.getElementById("status");
-  const latestMoviesGrid = document.getElementById("latest-movies-grid");
-  const latestTvGrid = document.getElementById("latest-tv-grid");
-  const moviesGrid = document.getElementById("movies-grid");
-  const tvGrid = document.getElementById("tv-grid");
-  const viewTitle = document.getElementById("view-title");
-  const viewDescription = document.getElementById("view-description");
-  const panels = Array.from(document.querySelectorAll(".view-panel"));
-  const navLinks = Array.from(document.querySelectorAll("[data-view-link]"));
-
-  if (
-    !template ||
-    !template.content.firstElementChild ||
-    !searchEl ||
-    !statusEl ||
-    !latestMoviesGrid ||
-    !latestTvGrid ||
-    !moviesGrid ||
-    !tvGrid ||
-    !viewTitle ||
-    !viewDescription ||
-    panels.length === 0 ||
-    navLinks.length === 0
-  ) {
-    return;
-  }
-
-  const elements = {
-    template,
-    statusEl,
-    latestMoviesGrid,
-    latestTvGrid,
-    moviesGrid,
-    tvGrid,
-    viewTitle,
-    viewDescription,
-    panels,
-    navLinks,
-  };
-
-  const initialView = new URLSearchParams(window.location.search).get("view");
-  let currentView = ["home", "movies", "tv"].includes(initialView) ? initialView : "home";
-
-  setView(currentView, elements);
-  updateView(currentView, searchEl.value.trim().toLowerCase(), elements);
-
-  navLinks.forEach((link) => {
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      currentView = link.dataset.viewLink;
-      const params = new URLSearchParams(window.location.search);
-      params.set("view", currentView);
-      window.history.replaceState({}, "", `?${params.toString()}`);
-      setView(currentView, elements);
-      updateView(currentView, searchEl.value.trim().toLowerCase(), elements);
-    });
-  });
-
-  searchEl.addEventListener("input", (event) => {
-    updateView(currentView, event.target.value.trim().toLowerCase(), elements);
-  });
 }
 
 window.addEventListener("DOMContentLoaded", initApp);
