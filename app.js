@@ -317,6 +317,7 @@ async function initApp() {
   if (!page || !template || !template.content.firstElementChild || !searchEl || !statusEl) {
     return;
   }
+}
 
   if (page === "movies") {
     await initSingleTypePage("movie", "movies-grid", template, statusEl, searchEl, loadMoreButton);
