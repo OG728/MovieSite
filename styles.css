@@ -135,6 +135,22 @@ main {
   display: block;
 }
 
+
+.open-player {
+  color: var(--accent-2);
+  display: inline-block;
+  margin-top: 0.7rem;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.open-player:hover,
+.open-player:focus-visible {
+  text-decoration: underline;
+}
+
+=======
+
 .sr-only {
   position: absolute;
   width: 1px;

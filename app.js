@@ -1,9 +1,12 @@
+
+=======
 const grid = document.getElementById("movie-grid");
 const statusEl = document.getElementById("status");
 const searchEl = document.getElementById("search");
 const template = document.getElementById("movie-template");
 
 /** @type {Array<{title: string, description: string, poster: string, tmdbId: number}>} */
+
 const movies = [
   {
     title: "Inception",
@@ -59,17 +62,75 @@ function buildEmbedUrl(tmdbId) {
   return `https://vidsrc.to/embed/movie/${tmdbId}`;
 }
 
+
+function buildMovieCard(movie, template) {
+=======
 function buildMovieCard(movie) {
+
   const node = template.content.firstElementChild.cloneNode(true);
   const poster = node.querySelector(".poster");
   const title = node.querySelector(".movie-title");
   const description = node.querySelector(".movie-description");
   const frame = node.querySelector(".movie-frame");
 
+  const openLink = node.querySelector(".open-player");
+=======
+
+
   title.textContent = movie.title;
   description.textContent = movie.description;
   poster.src = movie.poster;
   poster.alt = `${movie.title} poster`;
+
+
+  const embedUrl = buildEmbedUrl(movie.tmdbId);
+  frame.src = embedUrl;
+  frame.title = `${movie.title} player`;
+
+  openLink.href = embedUrl;
+  openLink.textContent = `Open ${movie.title} player in new tab`;
+
+  return node;
+}
+
+function renderMovies(items, elements) {
+  const { grid, statusEl, template } = elements;
+  const cards = items.map((movie) => buildMovieCard(movie, template));
+  grid.replaceChildren(...cards);
+  statusEl.textContent = `Showing ${items.length} movie${items.length === 1 ? "" : "s"}. If an embed is blocked, use the 'Open player' link.`;
+}
+
+function initApp() {
+  const grid = document.getElementById("movie-grid");
+  const statusEl = document.getElementById("status");
+  const searchEl = document.getElementById("search");
+  const template = document.getElementById("movie-template");
+
+  if (!grid || !statusEl || !searchEl || !template || !template.content.firstElementChild) {
+    return;
+  }
+
+  const elements = { grid, statusEl, template };
+  renderMovies(movies, elements);
+
+  searchEl.addEventListener("input", (event) => {
+    const query = event.target.value.trim().toLowerCase();
+
+    if (!query) {
+      renderMovies(movies, elements);
+      return;
+    }
+
+    const filtered = movies.filter(
+      (movie) => movie.title.toLowerCase().includes(query) || movie.description.toLowerCase().includes(query)
+    );
+
+    renderMovies(filtered, elements);
+  });
+}
+
+window.addEventListener("DOMContentLoaded", initApp);
+=======
   frame.src = buildEmbedUrl(movie.tmdbId);
   frame.title = `${movie.title} player`;
 
@@ -97,3 +158,4 @@ searchEl.addEventListener("input", (event) => {
 });
 
 renderMovies(movies);
+
