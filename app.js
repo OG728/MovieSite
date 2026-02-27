@@ -1,161 +1,347 @@
+const API_BASE = "https://vidsrc.to/vapi";
+const MAX_PAGES = 25;
+const REQUEST_TIMEOUT_MS = 8000;
 
-=======
-const grid = document.getElementById("movie-grid");
-const statusEl = document.getElementById("status");
-const searchEl = document.getElementById("search");
-const template = document.getElementById("movie-template");
+const API_TYPE_MAP = {
+  movie: "movie",
+  tv: "tv",
+};
 
-/** @type {Array<{title: string, description: string, poster: string, tmdbId: number}>} */
 
-const movies = [
-  {
-    title: "Inception",
-    description: "A thief who steals corporate secrets through dream-sharing technology is given one impossible task.",
-    poster: "https://image.tmdb.org/t/p/w780/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg",
-    tmdbId: 27205,
-  },
-  {
-    title: "Interstellar",
-    description: "A team travels through a wormhole in space in an attempt to ensure humanity's survival.",
-    poster: "https://image.tmdb.org/t/p/w780/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
-    tmdbId: 157336,
-  },
-  {
-    title: "The Dark Knight",
-    description: "Batman faces the Joker, a criminal mastermind who pushes Gotham toward chaos.",
-    poster: "https://image.tmdb.org/t/p/w780/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
-    tmdbId: 155,
-  },
-  {
-    title: "Parasite",
-    description: "Greed and class discrimination threaten the newly formed symbiotic relationship between two families.",
-    poster: "https://image.tmdb.org/t/p/w780/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
-    tmdbId: 496243,
-  },
-  {
-    title: "The Matrix",
-    description: "A hacker learns the shocking truth about reality and his role in the war against its controllers.",
-    poster: "https://image.tmdb.org/t/p/w780/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
-    tmdbId: 603,
-  },
-  {
-    title: "Dune",
-    description: "Paul Atreides journeys to the most dangerous planet in the universe to secure his family's future.",
-    poster: "https://image.tmdb.org/t/p/w780/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
-    tmdbId: 438631,
-  },
-  {
-    title: "Top Gun: Maverick",
-    description: "After thirty years, Maverick trains a detachment of TOP GUN graduates for a specialized mission.",
-    poster: "https://image.tmdb.org/t/p/w780/62HCnUTziyWcpDaBO2i1DX17ljH.jpg",
-    tmdbId: 361743,
-  },
-  {
-    title: "Spider-Man: Across the Spider-Verse",
-    description: "Miles Morales catapults across the multiverse where he meets a team of Spider-People.",
-    poster: "https://image.tmdb.org/t/p/w780/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg",
-    tmdbId: 569094,
-  },
+const FALLBACK_MOVIES = [
+  { title: "Inception", description: "A thief who steals corporate secrets through dream-sharing technology is given one impossible task.", poster: "https://image.tmdb.org/t/p/w500/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg", imdbId: "tt1375666", tmdbId: 27205, type: "movie" },
+  { title: "Interstellar", description: "A team travels through a wormhole in space in an attempt to ensure humanity's survival.", poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg", imdbId: "tt0816692", tmdbId: 157336, type: "movie" },
+  { title: "The Dark Knight", description: "Batman faces the Joker, a criminal mastermind who pushes Gotham toward chaos.", poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg", imdbId: "tt0468569", tmdbId: 155, type: "movie" },
 ];
 
-function buildEmbedUrl(tmdbId) {
-  return `https://vidsrc.to/embed/movie/${tmdbId}`;
+const FALLBACK_TV = [
+  { title: "Breaking Bad", description: "A chemistry teacher turned meth producer navigates danger, power, and family fallout.", poster: "https://image.tmdb.org/t/p/w500/eSzpy96DwBujGFj0xMbXBcGcfxX.jpg", imdbId: "tt0903747", tmdbId: 1396, type: "tv" },
+  { title: "Game of Thrones", description: "Noble families wage war for control of Westeros while ancient threats gather.", poster: "https://image.tmdb.org/t/p/w500/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg", imdbId: "tt0944947", tmdbId: 1399, type: "tv" },
+  { title: "Stranger Things", description: "A group of kids uncover dark experiments and supernatural forces in their small town.", poster: "https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg", imdbId: "tt4574334", tmdbId: 66732, type: "tv" },
+];
+
+const FALLBACK_POSTER =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 750'><rect width='100%' height='100%' fill='#0b1420'/><text x='50%' y='50%' fill='#8ea0bb' dominant-baseline='middle' text-anchor='middle' font-size='28' font-family='Arial'>No Poster</text></svg>`
+  );
+
+function getExternalId(item) {
+  return item.imdbId || item.tmdbId;
 }
 
+function buildWatchPageUrl(type, item) {
+  const params = new URLSearchParams({
+    type,
+    id: String(getExternalId(item)),
+    title: item.title,
+    description: item.description,
+  });
 
-function buildMovieCard(movie, template) {
-=======
-function buildMovieCard(movie) {
+  return `player.html?${params.toString()}`;
+}
 
+function normalizePoster(path) {
+  if (!path) {
+    return FALLBACK_POSTER;
+  }
+
+  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:image")) {
+    return path;
+  }
+
+  return `https://image.tmdb.org/t/p/w500${path}`;
+}
+
+function normalizeItem(raw, type) {
+  const title = raw.title || raw.name || raw.original_title || raw.original_name;
+  const imdbId = raw.imdb_id || raw.imdbId || raw.imdb || null;
+  const tmdbId = raw.tmdb_id || raw.tmdbId || raw.id || null;
+
+  if (!title || (!imdbId && !tmdbId)) {
+    return null;
+  }
+
+  return {
+    title,
+    description: raw.overview || raw.description || "No description available.",
+    poster: normalizePoster(raw.poster || raw.poster_path || raw.image || raw.backdrop_path),
+    tmdbId,
+    imdbId,
+    type,
+  };
+}
+
+function extractListFromResponse(payload) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.result)) {
+    return payload.result;
+  }
+
+  if (Array.isArray(payload?.results)) {
+    return payload.results;
+  }
+
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+
+  return [];
+}
+
+async function fetchCatalogPage(type, page) {
+  const apiType = API_TYPE_MAP[type];
+  const url = page > 1 ? `${API_BASE}/${apiType}/new/${page}` : `${API_BASE}/${apiType}/new`;
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${type} page ${page} (${response.status})`);
+    }
+
+    const payload = await response.json();
+    const list = extractListFromResponse(payload);
+
+    return list
+      .map((item) => normalizeItem(item, type))
+      .filter(Boolean);
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
+function buildMediaCard(item, template) {
   const node = template.content.firstElementChild.cloneNode(true);
+  const title = node.querySelector(".media-title");
+  const description = node.querySelector(".media-description");
   const poster = node.querySelector(".poster");
-  const title = node.querySelector(".movie-title");
-  const description = node.querySelector(".movie-description");
-  const frame = node.querySelector(".movie-frame");
+  const watchLink = node.querySelector(".watch-link");
+  const posterButton = node.querySelector(".poster-button");
 
-  const openLink = node.querySelector(".open-player");
-=======
+  if (!title || !description || !poster || !watchLink || !posterButton) {
+    return node;
+  }
 
+  const watchUrl = buildWatchPageUrl(item.type, item);
 
-  title.textContent = movie.title;
-  description.textContent = movie.description;
-  poster.src = movie.poster;
-  poster.alt = `${movie.title} poster`;
+  title.textContent = item.title;
+  description.textContent = item.description;
+  poster.src = item.poster;
+  poster.alt = `${item.title} poster`;
+  watchLink.href = watchUrl;
 
-
-  const embedUrl = buildEmbedUrl(movie.tmdbId);
-  frame.src = embedUrl;
-  frame.title = `${movie.title} player`;
-
-  openLink.href = embedUrl;
-  openLink.textContent = `Open ${movie.title} player in new tab`;
+  posterButton.addEventListener("click", () => {
+    window.location.href = watchUrl;
+  });
 
   return node;
 }
 
-function renderMovies(items, elements) {
-  const { grid, statusEl, template } = elements;
-  const cards = items.map((movie) => buildMovieCard(movie, template));
-  grid.replaceChildren(...cards);
-  statusEl.textContent = `Showing ${items.length} movie${items.length === 1 ? "" : "s"}. If an embed is blocked, use the 'Open player' link.`;
-}
-
-function initApp() {
-  const grid = document.getElementById("movie-grid");
-  const statusEl = document.getElementById("status");
-  const searchEl = document.getElementById("search");
-  const template = document.getElementById("movie-template");
-
-  if (!grid || !statusEl || !searchEl || !template || !template.content.firstElementChild) {
+function renderList(items, target, template) {
+  if (!target) {
     return;
   }
 
-  const elements = { grid, statusEl, template };
-  renderMovies(movies, elements);
+  const cards = items.map((item) => buildMediaCard(item, template));
+  target.replaceChildren(...cards);
+}
 
-  searchEl.addEventListener("input", (event) => {
-    const query = event.target.value.trim().toLowerCase();
+function filterItems(items, query) {
+  if (!query) {
+    return items;
+  }
 
-    if (!query) {
-      renderMovies(movies, elements);
-      return;
+  return items.filter(
+    (item) => item.title.toLowerCase().includes(query) || item.description.toLowerCase().includes(query)
+  );
+}
+
+function dedupeById(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = `${item.type}:${item.imdbId || item.tmdbId}`;
+    if (seen.has(key)) {
+      return false;
     }
-
-    const filtered = movies.filter(
-      (movie) => movie.title.toLowerCase().includes(query) || movie.description.toLowerCase().includes(query)
-    );
-
-    renderMovies(filtered, elements);
+    seen.add(key);
+    return true;
   });
 }
 
-window.addEventListener("DOMContentLoaded", initApp);
-=======
-  frame.src = buildEmbedUrl(movie.tmdbId);
-  frame.title = `${movie.title} player`;
-
-  return node;
+function createCatalogState(type) {
+  return {
+    type,
+    page: 0,
+    exhausted: false,
+    loading: false,
+    items: [],
+  };
 }
 
-function renderMovies(items) {
-  grid.replaceChildren(...items.map(buildMovieCard));
-  statusEl.textContent = `Showing ${items.length} movie${items.length === 1 ? "" : "s"}. Captions/subtitles depend on source availability in vidsrc.`;
-}
-
-searchEl.addEventListener("input", (event) => {
-  const query = event.target.value.trim().toLowerCase();
-
-  if (!query) {
-    renderMovies(movies);
+async function loadNextPage(state) {
+  if (state.loading || state.exhausted) {
     return;
   }
 
-  const filtered = movies.filter(
-    (movie) => movie.title.toLowerCase().includes(query) || movie.description.toLowerCase().includes(query)
-  );
+  if (state.page >= MAX_PAGES) {
+    state.exhausted = true;
+    return;
+  }
 
-  renderMovies(filtered);
+  state.loading = true;
+  const nextPage = state.page + 1;
+
+  try {
+    const pageItems = await fetchCatalogPage(state.type, nextPage);
+    state.page = nextPage;
+
+    if (pageItems.length === 0) {
+      state.exhausted = true;
+      return;
+    }
+
+    state.items = dedupeById([...state.items, ...pageItems]);
+  } finally {
+    state.loading = false;
+  }
+}
+
+async function ensureSearchCoverage(state, query) {
+  if (!query) {
+    return;
+  }
+
+  let filtered = filterItems(state.items, query);
+
+  while (filtered.length < 18 && !state.exhausted && state.page < MAX_PAGES) {
+    await loadNextPage(state);
+    filtered = filterItems(state.items, query);
+  }
+}
+
+function updateLoadMoreButton(button, state) {
+  if (!button) {
+    return;
+  }
+
+  button.disabled = state.loading || state.exhausted;
+  button.textContent = state.exhausted ? "No more results" : state.loading ? "Loading…" : "Load more";
+}
+
+async function initHomePage(template, statusEl, searchEl) {
+  const latestMoviesGrid = document.getElementById("latest-movies-grid");
+  const latestTvGrid = document.getElementById("latest-tv-grid");
+
+  if (!latestMoviesGrid || !latestTvGrid) {
+    return;
+  }
+
+  const movieState = createCatalogState("movie");
+  const tvState = createCatalogState("tv");
+
+  try {
+    await Promise.all([loadNextPage(movieState), loadNextPage(tvState)]);
+    const render = (query) => {
+      const latestMovies = filterItems(movieState.items, query).slice(0, 8);
+      const latestTv = filterItems(tvState.items, query).slice(0, 8);
+      renderList(latestMovies, latestMoviesGrid, template);
+      renderList(latestTv, latestTvGrid, template);
+      statusEl.textContent = `Home: ${latestMovies.length} latest movie${latestMovies.length === 1 ? "" : "s"} and ${latestTv.length} latest TV show${latestTv.length === 1 ? "" : "s"}.`;
+    };
+
+    render("");
+    searchEl.addEventListener("input", async (event) => {
+      const query = event.target.value.trim().toLowerCase();
+      await Promise.all([ensureSearchCoverage(movieState, query), ensureSearchCoverage(tvState, query)]);
+      render(query);
+    });
+  } catch {
+    movieState.items = FALLBACK_MOVIES;
+    tvState.items = FALLBACK_TV;
+    renderList(movieState.items, latestMoviesGrid, template);
+    renderList(tvState.items, latestTvGrid, template);
+    statusEl.textContent = "API unavailable right now. Showing fallback catalog.";
+  }
+}
+
+async function initSingleTypePage(type, gridId, template, statusEl, searchEl, loadMoreButton) {
+  const grid = document.getElementById(gridId);
+  if (!grid) {
+    return;
+  }
+
+  const state = createCatalogState(type);
+
+  const render = (query) => {
+    const filtered = filterItems(state.items, query);
+    renderList(filtered, grid, template);
+
+    const label = type === "movie" ? "movie" : "TV show";
+    statusEl.textContent = filtered.length
+      ? `Showing ${filtered.length} ${label}${filtered.length === 1 ? "" : "s"}. Loaded ${state.items.length} from API.`
+      : `No ${label} matches found in loaded results.`;
+
+    updateLoadMoreButton(loadMoreButton, state);
+  };
+
+  try {
+    await loadNextPage(state);
+    render("");
+
+    searchEl.addEventListener("input", async (event) => {
+      const query = event.target.value.trim().toLowerCase();
+      await ensureSearchCoverage(state, query);
+      render(query);
+    });
+
+    if (loadMoreButton) {
+      loadMoreButton.addEventListener("click", async () => {
+        await loadNextPage(state);
+        render(searchEl.value.trim().toLowerCase());
+      });
+    }
+  } catch {
+    state.items = type === "movie" ? FALLBACK_MOVIES : FALLBACK_TV;
+    state.exhausted = true;
+    renderList(state.items, grid, template);
+    statusEl.textContent = `API unavailable right now. Showing fallback ${type === "movie" ? "movies" : "TV shows"}.`;
+    updateLoadMoreButton(loadMoreButton, state);
+  }
+}
+
+async function initApp() {
+  const page = document.body.dataset.page;
+  const template = document.getElementById("media-template");
+  const searchEl = document.getElementById("search");
+  const statusEl = document.getElementById("status");
+  const loadMoreButton = document.getElementById("load-more");
+
+  if (!page || !template || !template.content.firstElementChild || !searchEl || !statusEl) {
+    return;
+  }
+
+  if (page === "movies") {
+    await initSingleTypePage("movie", "movies-grid", template, statusEl, searchEl, loadMoreButton);
+    return;
+  }
+
+  if (page === "tv") {
+    await initSingleTypePage("tv", "tv-grid", template, statusEl, searchEl, loadMoreButton);
+    return;
+  }
+
+  await initHomePage(template, statusEl, searchEl);
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  initApp();
 });
-
-renderMovies(movies);
-

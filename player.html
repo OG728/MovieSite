@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CineStream Player</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="background-glow" aria-hidden="true"></div>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="index.html">CineStream</a>
+        <nav class="main-nav" aria-label="Primary">
+          <a class="nav-link nav-anchor" href="index.html">Home</a>
+          <a class="nav-link nav-anchor" href="movies.html">Movies</a>
+          <a class="nav-link nav-anchor" href="tv.html">TV Shows</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="player-page">
+      <p class="breadcrumbs"><a href="index.html">Home</a> / <span id="crumb-type">Movie</span> / <span id="crumb-title">Loading…</span></p>
+      <p class="player-warning">
+        Some ad blockers may block streams. If you get an error while trying to play, refresh or try the open-player link below.
+      </p>
+      <section class="player-shell">
+        <iframe
+          id="player-frame"
+          class="movie-frame"
+          loading="lazy"
+          referrerpolicy="origin-when-cross-origin"
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+          allowfullscreen
+          title="Movie player"
+        ></iframe>
+      </section>
+      <div class="player-meta">
+        <h1 id="player-title">Loading…</h1>
+        <p id="player-description"></p>
+        <a id="open-player-link" class="watch-link" target="_blank" rel="noopener noreferrer">Open player in new tab</a>
+      </div>
+    </main>
+
+    <script src="player.js" defer></script>
+  </body>
+</html>
