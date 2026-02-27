@@ -296,7 +296,7 @@ async function loadNextPage(state, query = "") {
   };
 
     state.items = dedupeById([...state.items, ...pageItems]);
-  } catch {
+  } catch (error) {
     state.apiFailed = true;
   } finally {
     state.loading = false;
