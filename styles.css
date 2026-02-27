@@ -135,6 +135,7 @@ main {
   display: block;
 }
 
+
 .open-player {
   color: var(--accent-2);
   display: inline-block;
@@ -147,6 +148,8 @@ main {
 .open-player:focus-visible {
   text-decoration: underline;
 }
+
+=======
 
 .sr-only {
   position: absolute;

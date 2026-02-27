@@ -1,3 +1,12 @@
+
+=======
+const grid = document.getElementById("movie-grid");
+const statusEl = document.getElementById("status");
+const searchEl = document.getElementById("search");
+const template = document.getElementById("movie-template");
+
+/** @type {Array<{title: string, description: string, poster: string, tmdbId: number}>} */
+
 const movies = [
   {
     title: "Inception",
@@ -53,18 +62,26 @@ function buildEmbedUrl(tmdbId) {
   return `https://vidsrc.to/embed/movie/${tmdbId}`;
 }
 
+
 function buildMovieCard(movie, template) {
+=======
+function buildMovieCard(movie) {
+
   const node = template.content.firstElementChild.cloneNode(true);
   const poster = node.querySelector(".poster");
   const title = node.querySelector(".movie-title");
   const description = node.querySelector(".movie-description");
   const frame = node.querySelector(".movie-frame");
+
   const openLink = node.querySelector(".open-player");
+=======
+
 
   title.textContent = movie.title;
   description.textContent = movie.description;
   poster.src = movie.poster;
   poster.alt = `${movie.title} poster`;
+
 
   const embedUrl = buildEmbedUrl(movie.tmdbId);
   frame.src = embedUrl;
@@ -113,3 +130,32 @@ function initApp() {
 }
 
 window.addEventListener("DOMContentLoaded", initApp);
+=======
+  frame.src = buildEmbedUrl(movie.tmdbId);
+  frame.title = `${movie.title} player`;
+
+  return node;
+}
+
+function renderMovies(items) {
+  grid.replaceChildren(...items.map(buildMovieCard));
+  statusEl.textContent = `Showing ${items.length} movie${items.length === 1 ? "" : "s"}. Captions/subtitles depend on source availability in vidsrc.`;
+}
+
+searchEl.addEventListener("input", (event) => {
+  const query = event.target.value.trim().toLowerCase();
+
+  if (!query) {
+    renderMovies(movies);
+    return;
+  }
+
+  const filtered = movies.filter(
+    (movie) => movie.title.toLowerCase().includes(query) || movie.description.toLowerCase().includes(query)
+  );
+
+  renderMovies(filtered);
+});
+
+renderMovies(movies);
+
