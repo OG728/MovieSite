@@ -3,48 +3,38 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CineStream - Home</title>
+    <title>CineStream - Search</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body data-page="home">
+  <body data-page="search">
     <div class="background-glow" aria-hidden="true"></div>
     <header class="topbar">
       <div class="topbar-inner">
         <a class="brand" href="index.html">CineStream</a>
         <nav class="main-nav" aria-label="Primary">
-          <a class="nav-link is-active" href="index.html">Home</a>
-          <a class="nav-link nav-search" href="search.html" title="Search">
+          <a class="nav-link" href="index.html">Home</a>
+          <a class="nav-link nav-search is-active" href="search.html" title="Search">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </a>
         </nav>
       </div>
     </header>
-
-    <header class="site-header">
-      <h1>Home</h1>
-      <p>Browse the latest movies and TV shows, then open a dedicated watch page.</p>
-    </header>
-
     <main>
-      <section id="status" class="status" style="display:none">Loading catalog…</section>
+      <header class="site-header">
+        <h1>Search</h1>
+        <div class="search-wrap" style="display:flex;justify-content:center;align-items:center;margin-top:1.2rem;">
+          <label for="search" style="position:absolute;left:-9999px;">Search titles</label>
+          <input id="search" type="search" placeholder="Search by title or description..." autofocus style="width:100%;max-width:540px;border-radius:999px;border:2px solid #e00;background:#222;color:#fff;padding:0.8rem 1rem;font-size:1.1rem;box-shadow:0 0 8px #000;" />
+        </div>
+      </header>
+      <section id="status" class="status">Enter a search term to begin…</section>
       <section class="view-panel">
-        <section>
-          <h2 class="section-title">Latest Movies</h2>
-          <div id="latest-movies-grid" class="media-grid" aria-live="polite"></div>
-        </section>
-        <section>
-          <h2 class="section-title">Latest TV Shows</h2>
-          <div id="latest-tv-grid" class="media-grid" aria-live="polite"></div>
-        </section>
+        <div id="search-grid" class="media-grid" aria-live="polite"></div>
       </section>
     </main>
-
     <template id="media-template">
       <article class="media-card">
         <button class="poster-button" type="button">
@@ -60,7 +50,6 @@
         </div>
       </article>
     </template>
-
     <script src="app.js" defer></script>
   </body>
 </html>

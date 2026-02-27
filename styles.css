@@ -1,33 +1,94 @@
-/* Player description section styling */
-.player-description-section {
-  max-width: 800px;
-  margin: 2rem auto 0 auto;
-  padding: 1.5rem;
-  background: var(--panel-soft);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+.media-title {
+  display: none !important;
 }
-.desc-header {
-  margin-top: 0;
-  font-size: 1.3rem;
-  color: var(--accent);
+.media-card {
+  position: relative;
+  overflow: hidden;
 }
-#player-description {
-  color: var(--muted);
-  font-size: 1.05rem;
-  margin-bottom: 0;
+.poster-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.media-title-hover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.4em 0.2em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 3;
+}
+
+.media-card:hover .media-title-hover {
+  opacity: 1;
+}
+
+.poster-blur-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  background: rgba(0,0,0,0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 2;
+}
+.media-card:hover .poster-blur-overlay {
+  opacity: 1;
+}
+.media-card:hover .poster {
+  filter: blur(4px) brightness(0.7);
+  transition: filter 0.2s;
+}
+.play-badge {
+  display: none !important;
+}
+.media-content {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  border: none !important;
+}
+.media-content:empty,
+.media-content:has(.media-title[style*="display: none"], .watch-link[style*="display: none"]) {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.watch-link {
+  display: none;
+}
+.media-title {
+  display: none;
 }
 :root {
-  --bg: #0b0f14;
-  --panel: #111823;
-  --panel-soft: #172130;
-  --text: #eaf1ff;
-  --muted: #8ea0bb;
-  --accent: #9f6bff;
-  --accent-2: #58d7ff;
-  --border: #293347;
-  --warn-bg: #ffb400;
-  --warn-text: #1d1400;
+  --bg: #000000;
+  --panel: #111111;
+  --panel-soft: #222222;
+  --text: #ff2222;
+  --muted: #ff2222;
+  --accent: #ff2222;
+  --accent-2: #ff2222;
+  --border: #222222;
+  --warn-bg: #ff2222;
+  --warn-text: #000000;
 }
 
 * {
@@ -38,7 +99,7 @@ body {
   margin: 0;
   font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: var(--text);
-  background: radial-gradient(circle at 20% -20%, #1f2a3f 0, #0c1119 40%, var(--bg) 100%);
+  background: var(--bg);
   min-height: 100vh;
 }
 
@@ -162,7 +223,7 @@ main {
 .media-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(8, 1fr);
 }
 
 .media-card {

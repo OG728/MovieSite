@@ -7,8 +7,8 @@ const APP_LOG_PREFIX = "[CineStream]";
 
 // Optional: paste TMDB credentials directly in these constants.
 // This is useful if you do not want to set window vars/localStorage manually.
-const HARDCODED_TMDB_API_KEY = "";
-const HARDCODED_TMDB_BEARER_TOKEN = "";
+const HARDCODED_TMDB_API_KEY = "8e8d091a87218e8fa084531dedd4b01c";
+const HARDCODED_TMDB_BEARER_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4ZThkMDkxYTg3MjE4ZThmYTA4NDUzMWRlZGQ0YjAxYyIsIm5iZiI6MTc3MjE4NjM1Mi43NDgsInN1YiI6IjY5YTE2YWYwYmY0MjNhZDAzYjA5ZGI5ZiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.FygW_6KXrCB9H6tCRznF7YkN54Fd4OyxZu0iNxvryXQ";
 
 const TMDB_API_KEY =
   window.CINESTREAM_TMDB_API_KEY ||
@@ -38,7 +38,7 @@ const LOCAL_MOVIES = [
 ];
 
 const LOCAL_TV = [
-  ["Breaking Bad", "Teacher turns meth kingpin.", "tt0903747", 1396, "/eSzpy96DwBujGFj0xMbXBcGcfxX.jpg"],
+  ["The Office", "A mockumentary on a group of typical office workers.", "tt0386676", 2316, "/qWnJzyZhyy74gjpSjIXWmuk0ifX.jpg"],
   ["Game of Thrones", "Houses battle for the throne.", "tt0944947", 1399, "/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg"],
   ["Stranger Things", "Supernatural mystery in Hawkins.", "tt4574334", 66732, "/49WJfeN0moxb9IPfGn8AIqMGskD.jpg"],
   ["The Last of Us", "Post-apocalyptic survival.", "tt3581920", 100088, "/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg"],
@@ -103,6 +103,7 @@ function normalizeItem(raw, type) {
     tmdbId,
     imdbId,
     type,
+    rating: typeof raw.vote_average === "number" ? raw.vote_average : null,
   };
 }
 
@@ -269,10 +270,34 @@ async function fetchCatalogPage(type, page, query = "") {
 function buildMediaCard(item, template) {
   const node = template.content.firstElementChild.cloneNode(true);
   const title = node.querySelector(".media-title");
+
+  // Add hover title overlay
+  let hoverTitle = node.querySelector('.media-title-hover');
+  if (!hoverTitle) {
+    hoverTitle = document.createElement('div');
+    hoverTitle.className = 'media-title-hover';
+    hoverTitle.textContent = item.title;
+    const posterWrap = node.querySelector('.poster-wrap');
+    if (posterWrap) posterWrap.appendChild(hoverTitle);
+  }
   const description = node.querySelector(".media-description");
   const poster = node.querySelector(".poster");
+  // Add Play overlay for hover effect
+  let overlay = node.querySelector('.poster-blur-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.className = 'poster-blur-overlay';
+    overlay.textContent = 'Play';
+    poster.parentNode.appendChild(overlay);
+  }
   const watchLink = node.querySelector(".watch-link");
   const posterButton = node.querySelector(".poster-button");
+  let ratingEl = node.querySelector(".media-rating");
+  if (!ratingEl) {
+    ratingEl = document.createElement("div");
+    ratingEl.className = "media-rating";
+    title.insertAdjacentElement("afterend", ratingEl);
+  }
 
   if (!title || !description || !poster || !watchLink || !posterButton) {
     return node;
@@ -280,7 +305,14 @@ function buildMediaCard(item, template) {
 
   const watchUrl = buildWatchPageUrl(item.type, item);
   title.textContent = item.title;
-  // Description removed from main screen
+  description.textContent = "";
+  if (item.rating !== null && item.rating !== undefined) {
+    ratingEl.textContent = `⭐ ${item.rating.toFixed(1)}/10`;
+    ratingEl.style.display = "block";
+  } else {
+    ratingEl.textContent = "";
+    ratingEl.style.display = "none";
+  }
   poster.src = item.poster;
   poster.alt = `${item.title} poster`;
   watchLink.href = watchUrl;
@@ -408,23 +440,21 @@ async function initHomePage(template, statusEl, searchEl) {
   const movieState = createCatalogState("movie");
   const tvState = createCatalogState("tv");
 
-  const render = (query) => {
-    const latestMovies = filterItems(movieState.items, query).slice(0, 8);
-    const latestTv = filterItems(tvState.items, query).slice(0, 8);
-    renderList(latestMovies, latestMoviesGrid, template);
-    renderList(latestTv, latestTvGrid, template);
-    statusEl.textContent = `Home: ${latestMovies.length} movies + ${latestTv.length} TV shows (source: ${sourceLabel(movieState)}/${sourceLabel(tvState)}).`;
-  };
+  // Only show latest movies and TV shows, no search bar
+  // Load more pages if needed to get at least 24 movies
+  while (movieState.items.length < 24 && !movieState.exhausted) {
+    await loadNextPage(movieState);
+  }
+  const latestMovies = movieState.items.slice(0, 24);
+  renderList(latestMovies, latestMoviesGrid, template);
 
-  render("");
-  await Promise.all([loadNextPage(movieState), loadNextPage(tvState)]);
-  render(searchEl.value.trim().toLowerCase());
-
-  searchEl.addEventListener("input", async (event) => {
-    const query = event.target.value.trim().toLowerCase();
-    await Promise.all([ensureSearchCoverage(movieState, query), ensureSearchCoverage(tvState, query)]);
-    render(query);
-  });
+  // Load more pages if needed to get at least 24 TV shows
+  while (tvState.items.length < 24 && !tvState.exhausted) {
+    await loadNextPage(tvState);
+  }
+  const latestTv = tvState.items.slice(0, 24);
+  renderList(latestTv, latestTvGrid, template);
+  statusEl.textContent = `Home: ${latestMovies.length} movies + ${latestTv.length} TV shows (source: ${sourceLabel(movieState)}/${sourceLabel(tvState)}).`;
 }
 
 async function initSingleTypePage(type, gridId, template, statusEl, searchEl, loadMoreButton) {
@@ -466,23 +496,39 @@ async function initSingleTypePage(type, gridId, template, statusEl, searchEl, lo
 async function initApp() {
   const page = document.body.dataset.page;
   const template = document.getElementById("media-template");
-  const searchEl = document.getElementById("search");
   const statusEl = document.getElementById("status");
-  const loadMoreButton = document.getElementById("load-more");
+  if (!page || !template || !template.content.firstElementChild) return;
 
-  if (!page || !template || !template.content.firstElementChild || !searchEl || !statusEl) return;
-
-  if (page === "movies") {
-    await initSingleTypePage("movie", "movies-grid", template, statusEl, searchEl, loadMoreButton);
+  if (page === "search") {
+    const searchEl = document.getElementById("search");
+    const grid = document.getElementById("search-grid");
+    if (!searchEl || !statusEl || !grid) return;
+    const movieState = createCatalogState("movie");
+    const tvState = createCatalogState("tv");
+    const render = (query) => {
+      const filteredMovies = filterItems(movieState.items, query);
+      const filteredTv = filterItems(tvState.items, query);
+      const allResults = [...filteredMovies, ...filteredTv];
+      renderList(allResults, grid, template);
+      statusEl.textContent = allResults.length
+        ? `Found ${allResults.length} result${allResults.length === 1 ? "" : "s"}.`
+        : "No matches found.";
+    };
+    render("");
+    await Promise.all([loadNextPage(movieState), loadNextPage(tvState)]);
+    render(searchEl.value.trim().toLowerCase());
+    searchEl.addEventListener("input", (event) => {
+      if (window._searchPageDebounceTimeout) clearTimeout(window._searchPageDebounceTimeout);
+      const query = event.target.value.trim().toLowerCase();
+      window._searchPageDebounceTimeout = setTimeout(async () => {
+        await Promise.all([ensureSearchCoverage(movieState, query), ensureSearchCoverage(tvState, query)]);
+        render(query);
+      }, 300);
+    });
     return;
   }
 
-  if (page === "tv") {
-    await initSingleTypePage("tv", "tv-grid", template, statusEl, searchEl, loadMoreButton);
-    return;
-  }
-
-  await initHomePage(template, statusEl, searchEl);
+  await initHomePage(template, statusEl, null);
 }
 
 window.addEventListener("DOMContentLoaded", () => {
