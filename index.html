@@ -14,53 +14,67 @@
   </head>
   <body>
     <div class="background-glow" aria-hidden="true"></div>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="index.html">CineStream</a>
+        <nav class="main-nav" aria-label="Primary">
+          <button class="nav-link is-active" data-view-link="home">Home</button>
+          <button class="nav-link" data-view-link="movies">Movies</button>
+          <button class="nav-link" data-view-link="tv">TV Shows</button>
+        </nav>
+      </div>
+    </header>
+
     <header class="site-header">
-      <h1>CineStream</h1>
-      <p>Movie browsing UI inspired by Cineby with vidsrc.to embedded playback.</p>
+      <h1 id="view-title">Home</h1>
+      <p id="view-description">Browse the latest movies and TV shows, then open a dedicated watch page.</p>
       <div class="search-wrap">
-        <label for="search" class="sr-only">Search movies</label>
+        <label for="search" class="sr-only">Search titles</label>
         <input id="search" type="search" placeholder="Search by title or description..." />
       </div>
     </header>
 
     <main>
-      <section id="status" class="status">Loading films…</section>
-      <section id="movie-grid" class="movie-grid" aria-live="polite"></section>
+      <section id="status" class="status">Loading catalog…</section>
+
+      <section id="home-view" class="view-panel" data-view="home">
+        <section>
+          <h2 class="section-title">Latest Movies</h2>
+          <div id="latest-movies-grid" class="media-grid" aria-live="polite"></div>
+        </section>
+        <section>
+          <h2 class="section-title">Latest TV Shows</h2>
+          <div id="latest-tv-grid" class="media-grid" aria-live="polite"></div>
+        </section>
+      </section>
+
+      <section id="movies-view" class="view-panel" data-view="movies" hidden>
+        <h2 class="section-title">Movies</h2>
+        <div id="movies-grid" class="media-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="tv-view" class="view-panel" data-view="tv" hidden>
+        <h2 class="section-title">TV Shows</h2>
+        <div id="tv-grid" class="media-grid" aria-live="polite"></div>
+      </section>
     </main>
 
-    <template id="movie-template">
-      <article class="movie-card">
-        <div class="poster-wrap">
-          <img class="poster" alt="" loading="lazy" />
-        </div>
-        <div class="movie-content">
-          <h2 class="movie-title"></h2>
-          <p class="movie-description"></p>
-          <div class="player-wrap">
-            <iframe
-              class="movie-frame"
-              loading="lazy"
-              referrerpolicy="origin"
-
-              allow="autoplay; fullscreen; picture-in-picture"
-=======
-
-              allowfullscreen
-              title="Movie player"
-            ></iframe>
+    <template id="media-template">
+      <article class="media-card">
+        <button class="poster-button" type="button">
+          <div class="poster-wrap">
+            <img class="poster" alt="" loading="lazy" />
+            <span class="play-badge" aria-hidden="true">▶ Watch</span>
           </div>
-
-          <a class="open-player" target="_blank" rel="noopener noreferrer">Open player in new tab</a>
-=======
-
+        </button>
+        <div class="media-content">
+          <h3 class="media-title"></h3>
+          <p class="media-description"></p>
+          <a class="watch-link">Open watch page</a>
         </div>
       </article>
     </template>
 
-
     <script src="app.js" defer></script>
-=======
-    <script src="app.js" type="module"></script>
-
   </body>
 </html>
