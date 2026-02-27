@@ -1,20 +1,23 @@
 # CineStream
 
-CineStream is a lightweight, Cineby-inspired movie browsing interface with:
+CineStream is a lightweight, Cineby-inspired browsing interface with:
 
 - A cinematic dark UI
-- A searchable movie grid
-- Embedded playback via `vidsrc.to` iframe links
+- A top navigation bar (`Home`, `Movies`, `TV Shows`)
+- A home feed split into **Latest Movies** and **Latest TV Shows**
+- Dedicated watch pages (player moved off the homepage)
 
 ## Project Structure
 
-- `index.html` – page structure and template for movie cards
-- `styles.css` – visual styling and responsive layout
-- `app.js` – movie data, render logic, search filtering, and embed URL building
+- `index.html` – main catalog page with top nav and list sections
+- `player.html` – dedicated player page for a selected movie/show
+- `styles.css` – styling for catalog and player layouts
+- `app.js` – catalog data, rendering, search, and navigation state
+- `player.js` – player-page URL parsing and embed setup
 
 ## How to Run Locally
 
-Because this is a static site, you can run it with any basic local web server.
+Because this is a static site, run any local web server.
 
 ### Option 1: Python (recommended)
 
@@ -26,20 +29,14 @@ Then open:
 
 - `http://localhost:4173`
 
-### Option 2: VS Code Live Server
-
-1. Open this folder in VS Code.
-2. Install the **Live Server** extension (if needed).
-3. Right-click `index.html` and choose **Open with Live Server**.
-
 ## Usage
 
 1. Open the site in your browser.
-2. Use the search bar to filter movies by title or description.
-3. Click play on any embedded player card.
+2. Use the top bar to switch between Home, Movies, and TV Shows.
+3. Click a poster or "Open watch page" to go to a dedicated player page.
+4. On the player page, use the fallback "Open ... in a new tab" link if needed.
 
 ## Notes
 
-- Subtitle/caption availability depends on the upstream stream source inside vidsrc embeds.
-- Some networks/browsers may block third-party embeds depending on policy settings.
-
+- Streams come from third-party embeds (`vidsrc.to`) and may be blocked by network/ad-blocking/browser policies.
+- IDs prefer IMDb format for compatibility, with TMDB fallback.

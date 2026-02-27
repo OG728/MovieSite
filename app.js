@@ -64,6 +64,8 @@ function buildEmbedUrl(movie) {
 
 function buildMovieCard(movie, template) {
   const node = template.content.firstElementChild.cloneNode(true);
+  const title = node.querySelector(".media-title");
+  const description = node.querySelector(".media-description");
   const poster = node.querySelector(".poster");
   const title = node.querySelector(".movie-title");
   const description = node.querySelector(".movie-description");
@@ -98,33 +100,37 @@ function renderMovies(items, elements) {
   statusEl.textContent = `Showing ${items.length} movie${items.length === 1 ? "" : "s"}. If the in-page player is blocked, use the 'Open player' link.`;
 }
 
-function initApp() {
-  const grid = document.getElementById("movie-grid");
-  const statusEl = document.getElementById("status");
-  const searchEl = document.getElementById("search");
-  const template = document.getElementById("movie-template");
+function setView(view, elements) {
+  const { panels, navLinks, viewTitle, viewDescription } = elements;
 
-  if (!grid || !statusEl || !searchEl || !template || !template.content.firstElementChild) {
-    return;
+  panels.forEach((panel) => {
+    panel.hidden = panel.dataset.view !== view;
+  });
+
+  navLinks.forEach((link) => {
+    link.classList.toggle("is-active", link.dataset.viewLink === view);
+  });
+
+  if (view === "movies") {
+    viewTitle.textContent = "Movies";
+    viewDescription.textContent = "Browse our movie collection and open each title on its own watch page.";
+  } else if (view === "tv") {
+    viewTitle.textContent = "TV Shows";
+    viewDescription.textContent = "Browse TV shows and open each series in a dedicated player page.";
+  } else {
+    viewTitle.textContent = "Home";
+    viewDescription.textContent = "Browse the latest movies and TV shows, then open a dedicated watch page.";
+  }
+}
+
+function getFilteredItems(items, query) {
+  if (!query) {
+    return items;
   }
 
-  const elements = { grid, statusEl, template };
-  renderMovies(movies, elements);
-
-  searchEl.addEventListener("input", (event) => {
-    const query = event.target.value.trim().toLowerCase();
-
-    if (!query) {
-      renderMovies(movies, elements);
-      return;
-    }
-
-    const filtered = movies.filter(
-      (movie) => movie.title.toLowerCase().includes(query) || movie.description.toLowerCase().includes(query)
-    );
-
-    renderMovies(filtered, elements);
-  });
+  return items.filter(
+    (item) => item.title.toLowerCase().includes(query) || item.description.toLowerCase().includes(query)
+  );
 }
 
 window.addEventListener("DOMContentLoaded", initApp);
