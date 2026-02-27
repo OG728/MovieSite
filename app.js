@@ -1,5 +1,6 @@
 const API_BASE = "https://vidsrc.to/vapi";
 const MAX_PAGES = 25;
+const REQUEST_TIMEOUT_MS = 8000;
 
 const API_TYPE_MAP = {
   movie: "movie",
@@ -94,18 +95,28 @@ function extractListFromResponse(payload) {
 async function fetchCatalogPage(type, page) {
   const apiType = API_TYPE_MAP[type];
   const url = page > 1 ? `${API_BASE}/${apiType}/new/${page}` : `${API_BASE}/${apiType}/new`;
-  const response = await fetch(url);
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${type} page ${page} (${response.status})`);
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${type} page ${page} (${response.status})`);
+    }
+
+    const payload = await response.json();
+    const list = extractListFromResponse(payload);
+
+    return list
+      .map((item) => normalizeItem(item, type))
+      .filter(Boolean);
+  } finally {
+    window.clearTimeout(timeoutId);
   }
-
-  const payload = await response.json();
-  const list = extractListFromResponse(payload);
-
-  return list
-    .map((item) => normalizeItem(item, type))
-    .filter(Boolean);
 }
 
 function buildMediaCard(item, template) {
