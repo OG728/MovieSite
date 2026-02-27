@@ -1,0 +1,115 @@
+const movies = [
+  {
+    title: "Inception",
+    description: "A thief who steals corporate secrets through dream-sharing technology is given one impossible task.",
+    poster: "https://image.tmdb.org/t/p/w780/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg",
+    tmdbId: 27205,
+  },
+  {
+    title: "Interstellar",
+    description: "A team travels through a wormhole in space in an attempt to ensure humanity's survival.",
+    poster: "https://image.tmdb.org/t/p/w780/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+    tmdbId: 157336,
+  },
+  {
+    title: "The Dark Knight",
+    description: "Batman faces the Joker, a criminal mastermind who pushes Gotham toward chaos.",
+    poster: "https://image.tmdb.org/t/p/w780/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
+    tmdbId: 155,
+  },
+  {
+    title: "Parasite",
+    description: "Greed and class discrimination threaten the newly formed symbiotic relationship between two families.",
+    poster: "https://image.tmdb.org/t/p/w780/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
+    tmdbId: 496243,
+  },
+  {
+    title: "The Matrix",
+    description: "A hacker learns the shocking truth about reality and his role in the war against its controllers.",
+    poster: "https://image.tmdb.org/t/p/w780/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
+    tmdbId: 603,
+  },
+  {
+    title: "Dune",
+    description: "Paul Atreides journeys to the most dangerous planet in the universe to secure his family's future.",
+    poster: "https://image.tmdb.org/t/p/w780/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+    tmdbId: 438631,
+  },
+  {
+    title: "Top Gun: Maverick",
+    description: "After thirty years, Maverick trains a detachment of TOP GUN graduates for a specialized mission.",
+    poster: "https://image.tmdb.org/t/p/w780/62HCnUTziyWcpDaBO2i1DX17ljH.jpg",
+    tmdbId: 361743,
+  },
+  {
+    title: "Spider-Man: Across the Spider-Verse",
+    description: "Miles Morales catapults across the multiverse where he meets a team of Spider-People.",
+    poster: "https://image.tmdb.org/t/p/w780/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg",
+    tmdbId: 569094,
+  },
+];
+
+function buildEmbedUrl(tmdbId) {
+  return `https://vidsrc.to/embed/movie/${tmdbId}`;
+}
+
+function buildMovieCard(movie, template) {
+  const node = template.content.firstElementChild.cloneNode(true);
+  const poster = node.querySelector(".poster");
+  const title = node.querySelector(".movie-title");
+  const description = node.querySelector(".movie-description");
+  const frame = node.querySelector(".movie-frame");
+  const openLink = node.querySelector(".open-player");
+
+  title.textContent = movie.title;
+  description.textContent = movie.description;
+  poster.src = movie.poster;
+  poster.alt = `${movie.title} poster`;
+
+  const embedUrl = buildEmbedUrl(movie.tmdbId);
+  frame.src = embedUrl;
+  frame.title = `${movie.title} player`;
+
+  openLink.href = embedUrl;
+  openLink.textContent = `Open ${movie.title} player in new tab`;
+
+  return node;
+}
+
+function renderMovies(items, elements) {
+  const { grid, statusEl, template } = elements;
+  const cards = items.map((movie) => buildMovieCard(movie, template));
+  grid.replaceChildren(...cards);
+  statusEl.textContent = `Showing ${items.length} movie${items.length === 1 ? "" : "s"}. If an embed is blocked, use the 'Open player' link.`;
+}
+
+function initApp() {
+  const grid = document.getElementById("movie-grid");
+  const statusEl = document.getElementById("status");
+  const searchEl = document.getElementById("search");
+  const template = document.getElementById("movie-template");
+
+  if (!grid || !statusEl || !searchEl || !template || !template.content.firstElementChild) {
+    return;
+  }
+
+  const elements = { grid, statusEl, template };
+  renderMovies(movies, elements);
+
+  searchEl.addEventListener("input", (event) => {
+    const query = event.target.value.trim().toLowerCase();
+
+    if (!query) {
+      renderMovies(movies, elements);
+      return;
+    }
+
+    const filtered = movies.filter(
+      (movie) => movie.title.toLowerCase().includes(query) || movie.description.toLowerCase().includes(query)
+    );
+
+    renderMovies(filtered, elements);
+  });
+}
+
+window.addEventListener("DOMContentLoaded", initApp);
