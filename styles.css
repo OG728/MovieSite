@@ -1,3 +1,22 @@
+/* Player description section styling */
+.player-description-section {
+  max-width: 800px;
+  margin: 2rem auto 0 auto;
+  padding: 1.5rem;
+  background: var(--panel-soft);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+}
+.desc-header {
+  margin-top: 0;
+  font-size: 1.3rem;
+  color: var(--accent);
+}
+#player-description {
+  color: var(--muted);
+  font-size: 1.05rem;
+  margin-bottom: 0;
+}
 :root {
   --bg: #0b0f14;
   --panel: #111823;

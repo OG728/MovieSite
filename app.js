@@ -280,7 +280,7 @@ function buildMediaCard(item, template) {
 
   const watchUrl = buildWatchPageUrl(item.type, item);
   title.textContent = item.title;
-  description.textContent = item.description;
+  // Description removed from main screen
   poster.src = item.poster;
   poster.alt = `${item.title} poster`;
   watchLink.href = watchUrl;
