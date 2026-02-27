@@ -290,6 +290,7 @@ async function loadNextPage(state, query = "") {
       state.exhausted = true;
       return;
     }
+  };
 
     state.items = dedupeById([...state.items, ...pageItems]);
   } catch {
