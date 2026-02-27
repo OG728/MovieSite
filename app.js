@@ -28,13 +28,6 @@ const movies = [
     imdbId: "tt6751668",
   },
   {
-    title: "The Matrix",
-    description: "A hacker learns the shocking truth about reality and his role in the war against its controllers.",
-    poster: "https://image.tmdb.org/t/p/w780/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
-    tmdbId: 603,
-    imdbId: "tt0133093",
-  },
-  {
     title: "Dune",
     description: "Paul Atreides journeys to the most dangerous planet in the universe to secure his family's future.",
     poster: "https://image.tmdb.org/t/p/w780/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
@@ -48,56 +41,102 @@ const movies = [
     tmdbId: 361743,
     imdbId: "tt1745960",
   },
+];
+
+const tvShows = [
   {
-    title: "Spider-Man: Across the Spider-Verse",
-    description: "Miles Morales catapults across the multiverse where he meets a team of Spider-People.",
-    poster: "https://image.tmdb.org/t/p/w780/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg",
-    tmdbId: 569094,
-    imdbId: "tt9362722",
+    title: "Breaking Bad",
+    description: "A chemistry teacher turned meth producer navigates danger, power, and family fallout.",
+    poster: "https://image.tmdb.org/t/p/w780/eSzpy96DwBujGFj0xMbXBcGcfxX.jpg",
+    tmdbId: 1396,
+    imdbId: "tt0903747",
+  },
+  {
+    title: "Game of Thrones",
+    description: "Noble families wage war for control of Westeros while ancient threats gather.",
+    poster: "https://image.tmdb.org/t/p/w780/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg",
+    tmdbId: 1399,
+    imdbId: "tt0944947",
+  },
+  {
+    title: "Stranger Things",
+    description: "A group of kids uncover dark experiments and supernatural forces in their small town.",
+    poster: "https://image.tmdb.org/t/p/w780/49WJfeN0moxb9IPfGn8AIqMGskD.jpg",
+    tmdbId: 66732,
+    imdbId: "tt4574334",
+  },
+  {
+    title: "The Last of Us",
+    description: "In a post-pandemic world, two survivors cross a shattered America.",
+    poster: "https://image.tmdb.org/t/p/w780/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg",
+    tmdbId: 100088,
+    imdbId: "tt3581920",
+  },
+  {
+    title: "The Bear",
+    description: "A young chef returns home to run his family sandwich shop in Chicago.",
+    poster: "https://image.tmdb.org/t/p/w780/sHFlbKS3WLqMnp9t2ghADIJFnuQ.jpg",
+    tmdbId: 136315,
+    imdbId: "tt14452776",
+  },
+  {
+    title: "Wednesday",
+    description: "Wednesday Addams investigates a supernatural mystery at Nevermore Academy.",
+    poster: "https://image.tmdb.org/t/p/w780/9PFonBhy4cQy7Jz20NpMygczOkv.jpg",
+    tmdbId: 119051,
+    imdbId: "tt13443470",
   },
 ];
 
-function buildEmbedUrl(movie) {
-  const preferredId = movie.imdbId || movie.tmdbId;
-  return `https://vidsrc.to/embed/movie/${preferredId}`;
+function getExternalId(item) {
+  return item.imdbId || item.tmdbId;
 }
 
-function buildMovieCard(movie, template) {
+function buildWatchPageUrl(type, item) {
+  const params = new URLSearchParams({
+    type,
+    id: String(getExternalId(item)),
+    title: item.title,
+    description: item.description,
+  });
+
+  return `player.html?${params.toString()}`;
+}
+
+function buildMediaCard(item, type, template) {
   const node = template.content.firstElementChild.cloneNode(true);
   const title = node.querySelector(".media-title");
   const description = node.querySelector(".media-description");
   const poster = node.querySelector(".poster");
-  const title = node.querySelector(".movie-title");
-  const description = node.querySelector(".movie-description");
-  const frame = node.querySelector(".movie-frame");
-  const openLink = node.querySelector(".open-player");
+  const watchLink = node.querySelector(".watch-link");
+  const posterButton = node.querySelector(".poster-button");
 
-  title.textContent = movie.title;
-  description.textContent = movie.description;
-  poster.src = movie.poster;
-  poster.alt = `${movie.title} poster`;
+  if (!title || !description || !poster || !watchLink || !posterButton) {
+    return node;
+  }
 
-  const embedUrl = buildEmbedUrl(movie);
-  frame.src = embedUrl;
-  frame.title = `${movie.title} player`;
+  const watchUrl = buildWatchPageUrl(type, item);
 
-  openLink.href = embedUrl;
-  openLink.textContent = `Open ${movie.title} player in new tab`;
+  title.textContent = item.title;
+  description.textContent = item.description;
+  poster.src = item.poster;
+  poster.alt = `${item.title} poster`;
+  watchLink.href = watchUrl;
+
+  posterButton.addEventListener("click", () => {
+    window.location.href = watchUrl;
+  });
 
   return node;
 }
 
-function renderMovies(items, elements) {
-  const { grid, statusEl, template } = elements;
-  const cards = items.map((movie) => buildMovieCard(movie, template));
-  grid.replaceChildren(...cards);
-
-  if (items.length === 0) {
-    statusEl.textContent = "No matches found. Try a different title or keyword.";
+function renderList(items, type, target, template) {
+  if (!target) {
     return;
   }
 
-  statusEl.textContent = `Showing ${items.length} movie${items.length === 1 ? "" : "s"}. If the in-page player is blocked, use the 'Open player' link.`;
+  const cards = items.map((item) => buildMediaCard(item, type, template));
+  target.replaceChildren(...cards);
 }
 
 function setView(view, elements) {
@@ -131,6 +170,101 @@ function getFilteredItems(items, query) {
   return items.filter(
     (item) => item.title.toLowerCase().includes(query) || item.description.toLowerCase().includes(query)
   );
+}
+
+function updateView(view, query, elements) {
+  const { statusEl, template, latestMoviesGrid, latestTvGrid, moviesGrid, tvGrid } = elements;
+
+  const latestMovies = getFilteredItems(movies.slice(0, 4), query);
+  const latestTv = getFilteredItems(tvShows.slice(0, 4), query);
+  const allMovies = getFilteredItems(movies, query);
+  const allTv = getFilteredItems(tvShows, query);
+
+  if (view === "movies") {
+    renderList(allMovies, "movie", moviesGrid, template);
+    statusEl.textContent = allMovies.length
+      ? `Showing ${allMovies.length} movie${allMovies.length === 1 ? "" : "s"}.`
+      : "No movie matches found.";
+    return;
+  }
+
+  if (view === "tv") {
+    renderList(allTv, "tv", tvGrid, template);
+    statusEl.textContent = allTv.length
+      ? `Showing ${allTv.length} TV show${allTv.length === 1 ? "" : "s"}.`
+      : "No TV show matches found.";
+    return;
+  }
+
+  renderList(latestMovies, "movie", latestMoviesGrid, template);
+  renderList(latestTv, "tv", latestTvGrid, template);
+  statusEl.textContent = `Home: ${latestMovies.length} latest movie${latestMovies.length === 1 ? "" : "s"} and ${latestTv.length} latest TV show${latestTv.length === 1 ? "" : "s"}.`;
+}
+
+function initApp() {
+  const template = document.getElementById("media-template");
+  const searchEl = document.getElementById("search");
+  const statusEl = document.getElementById("status");
+  const latestMoviesGrid = document.getElementById("latest-movies-grid");
+  const latestTvGrid = document.getElementById("latest-tv-grid");
+  const moviesGrid = document.getElementById("movies-grid");
+  const tvGrid = document.getElementById("tv-grid");
+  const viewTitle = document.getElementById("view-title");
+  const viewDescription = document.getElementById("view-description");
+  const panels = Array.from(document.querySelectorAll(".view-panel"));
+  const navLinks = Array.from(document.querySelectorAll("[data-view-link]"));
+
+  if (
+    !template ||
+    !template.content.firstElementChild ||
+    !searchEl ||
+    !statusEl ||
+    !latestMoviesGrid ||
+    !latestTvGrid ||
+    !moviesGrid ||
+    !tvGrid ||
+    !viewTitle ||
+    !viewDescription ||
+    panels.length === 0 ||
+    navLinks.length === 0
+  ) {
+    return;
+  }
+
+  const elements = {
+    template,
+    statusEl,
+    latestMoviesGrid,
+    latestTvGrid,
+    moviesGrid,
+    tvGrid,
+    viewTitle,
+    viewDescription,
+    panels,
+    navLinks,
+  };
+
+  const initialView = new URLSearchParams(window.location.search).get("view");
+  let currentView = ["home", "movies", "tv"].includes(initialView) ? initialView : "home";
+
+  setView(currentView, elements);
+  updateView(currentView, searchEl.value.trim().toLowerCase(), elements);
+
+  navLinks.forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      currentView = link.dataset.viewLink;
+      const params = new URLSearchParams(window.location.search);
+      params.set("view", currentView);
+      window.history.replaceState({}, "", `?${params.toString()}`);
+      setView(currentView, elements);
+      updateView(currentView, searchEl.value.trim().toLowerCase(), elements);
+    });
+  });
+
+  searchEl.addEventListener("input", (event) => {
+    updateView(currentView, event.target.value.trim().toLowerCase(), elements);
+  });
 }
 
 window.addEventListener("DOMContentLoaded", initApp);

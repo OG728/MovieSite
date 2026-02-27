@@ -143,7 +143,7 @@ main {
 .media-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 
 .media-card {
@@ -251,17 +251,21 @@ main {
   display: block;
 }
 
-.open-player {
-  color: var(--accent-2);
-  display: inline-block;
-  margin-top: 0.7rem;
-  font-size: 0.9rem;
-  text-decoration: none;
+.player-meta {
+  margin-top: 1rem;
+  background: color-mix(in srgb, var(--panel) 90%, #1f2a3f);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
 }
 
 .player-meta h1 {
   margin: 0;
   font-size: 1.25rem;
+}
+
+.player-meta p {
+  color: var(--muted);
 }
 
 .sr-only {
@@ -275,21 +279,29 @@ main {
   border: 0;
 }
 
+@media (max-width: 700px) {
+  .topbar-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-@media (max-width: 640px) {
+  .main-nav {
+    flex-wrap: wrap;
+  }
+
   .site-header {
-    padding: 2rem 0.9rem 1.5rem;
+    padding: 1.5rem 0.9rem 1.2rem;
   }
 
   main {
     padding: 0 0.9rem 2rem;
   }
 
-  .movie-grid {
-    grid-template-columns: 1fr;
+  .media-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
 
   .poster-wrap {
-    height: 160px;
+    height: 240px;
   }
 }

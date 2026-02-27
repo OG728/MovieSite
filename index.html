@@ -18,9 +18,9 @@
       <div class="topbar-inner">
         <a class="brand" href="index.html">CineStream</a>
         <nav class="main-nav" aria-label="Primary">
-          <button class="nav-link is-active" data-view-link="home">Home</button>
-          <button class="nav-link" data-view-link="movies">Movies</button>
-          <button class="nav-link" data-view-link="tv">TV Shows</button>
+          <a class="nav-link is-active" data-view-link="home" href="?view=home">Home</a>
+          <a class="nav-link" data-view-link="movies" href="?view=movies">Movies</a>
+          <a class="nav-link" data-view-link="tv" href="?view=tv">TV Shows</a>
         </nav>
       </div>
     </header>
@@ -37,25 +37,40 @@
     <main>
       <section id="status" class="status">Loading catalog…</section>
 
-    <template id="movie-template">
-      <article class="movie-card">
-        <div class="poster-wrap">
-          <img class="poster" alt="" loading="lazy" />
-        </div>
-        <div class="movie-content">
-          <h2 class="movie-title"></h2>
-          <p class="movie-description"></p>
-          <div class="player-wrap">
-            <iframe
-              class="movie-frame"
-              loading="lazy"
-              referrerpolicy="origin-when-cross-origin"
-              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-              allowfullscreen
-              title="Movie player"
-            ></iframe>
+      <section id="home-view" class="view-panel" data-view="home">
+        <section>
+          <h2 class="section-title">Latest Movies</h2>
+          <div id="latest-movies-grid" class="media-grid" aria-live="polite"></div>
+        </section>
+        <section>
+          <h2 class="section-title">Latest TV Shows</h2>
+          <div id="latest-tv-grid" class="media-grid" aria-live="polite"></div>
+        </section>
+      </section>
+
+      <section id="movies-view" class="view-panel" data-view="movies" hidden>
+        <h2 class="section-title">Movies</h2>
+        <div id="movies-grid" class="media-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="tv-view" class="view-panel" data-view="tv" hidden>
+        <h2 class="section-title">TV Shows</h2>
+        <div id="tv-grid" class="media-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <template id="media-template">
+      <article class="media-card">
+        <button class="poster-button" type="button">
+          <div class="poster-wrap">
+            <img class="poster" alt="" loading="lazy" />
+            <span class="play-badge" aria-hidden="true">▶ Watch</span>
           </div>
-          <a class="open-player" target="_blank" rel="noopener noreferrer">Open player in new tab</a>
+        </button>
+        <div class="media-content">
+          <h3 class="media-title"></h3>
+          <p class="media-description"></p>
+          <a class="watch-link">Open watch page</a>
         </div>
       </article>
     </template>
