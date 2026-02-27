@@ -3,16 +3,22 @@ const TMDB_API_BASE = "https://api.themoviedb.org/3";
 const MAX_PAGES = 25;
 const REQUEST_TIMEOUT_MS = 8000;
 
-// Paste your TMDB credentials here if you want to hardcode them:
-// - TMDB_API_KEY default value (currently empty string)
-// - TMDB_BEARER_TOKEN default value (currently empty string)
+const APP_LOG_PREFIX = "[CineStream]";
+
+// Optional: paste TMDB credentials directly in these constants.
+// This is useful if you do not want to set window vars/localStorage manually.
+const HARDCODED_TMDB_API_KEY = "";
+const HARDCODED_TMDB_BEARER_TOKEN = "";
+
 const TMDB_API_KEY =
   window.CINESTREAM_TMDB_API_KEY ||
+  HARDCODED_TMDB_API_KEY ||
   window.localStorage.getItem("tmdb_api_key") ||
   "";
 
 const TMDB_BEARER_TOKEN =
   window.CINESTREAM_TMDB_BEARER_TOKEN ||
+  HARDCODED_TMDB_BEARER_TOKEN ||
   window.localStorage.getItem("tmdb_bearer_token") ||
   "";
 
@@ -111,6 +117,27 @@ function getTmdbRequestHeaders() {
   };
 }
 
+function hasTmdbCredentials() {
+  return Boolean(TMDB_API_KEY || TMDB_BEARER_TOKEN);
+}
+
+function logTmdbSetup() {
+  if (!hasTmdbCredentials()) {
+    console.warn(
+      `${APP_LOG_PREFIX} TMDB is not configured. Set window.CINESTREAM_TMDB_API_KEY, window.CINESTREAM_TMDB_BEARER_TOKEN, localStorage keys (tmdb_api_key/tmdb_bearer_token), or HARDCODED_TMDB_* constants.`
+    );
+    return;
+  }
+
+  if (TMDB_API_KEY) {
+    console.info(`${APP_LOG_PREFIX} TMDB API key detected.`);
+  }
+
+  if (TMDB_BEARER_TOKEN) {
+    console.info(`${APP_LOG_PREFIX} TMDB bearer token detected.`);
+  }
+}
+
 function extractListFromResponse(payload) {
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload?.result)) return payload.result;
@@ -129,24 +156,52 @@ async function fetchJsonWithTimeout(url) {
       cache: "no-store",
       headers: url.includes("api.themoviedb.org") ? getTmdbRequestHeaders() : undefined,
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    if (!response.ok) {
+      const provider = url.includes("api.themoviedb.org") ? "TMDB" : "vidsrc";
+
+      if (provider === "TMDB" && (response.status === 401 || response.status === 403)) {
+        console.error(
+          `${APP_LOG_PREFIX} TMDB authentication failed (${response.status}). Check TMDB_API_KEY / TMDB_BEARER_TOKEN.`
+        );
+      } else {
+        console.warn(`${APP_LOG_PREFIX} ${provider} request failed with HTTP ${response.status}.`, url);
+      }
+
+      throw new Error(`HTTP ${response.status}`);
+    }
+
     return response.json();
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      console.warn(`${APP_LOG_PREFIX} Request timed out after ${REQUEST_TIMEOUT_MS}ms.`, url);
+      throw new Error("Request timeout");
+    }
+
+    throw error;
   } finally {
     window.clearTimeout(timeoutId);
   }
 }
 
 async function fetchFromTmdb(type, page, query = "") {
-  if (!TMDB_API_KEY) {
+  if (!hasTmdbCredentials()) {
+    if (page === 1 && !query) {
+      console.warn(
+        `${APP_LOG_PREFIX} TMDB credentials are missing. Add TMDB_API_KEY or TMDB_BEARER_TOKEN. Falling back to other sources/local data.`
+      );
+    }
+
     return [];
   }
 
   const mediaType = type === "movie" ? "movie" : "tv";
   const endpoint = query ? `search/${mediaType}` : `discover/${mediaType}`;
-  const params = new URLSearchParams({
-    api_key: TMDB_API_KEY,
-    page: String(page),
-  });
+  const params = new URLSearchParams({ page: String(page) });
+
+  if (TMDB_API_KEY) {
+    params.set("api_key", TMDB_API_KEY);
+  }
 
   if (query) {
     params.set("query", query);
@@ -189,6 +244,7 @@ async function fetchCatalogPage(type, page, query = "") {
   try {
     const tmdbItems = await fetchFromTmdb(type, page, query);
     if (tmdbItems.length > 0) {
+      console.info(`${APP_LOG_PREFIX} Loaded ${tmdbItems.length} ${type} items from TMDB (page ${page}).`);
       return { items: tmdbItems, source: "tmdb" };
     }
   } catch (error) {
@@ -199,6 +255,7 @@ async function fetchCatalogPage(type, page, query = "") {
     try {
       const vidsrcItems = await fetchFromVidsrc(type, page);
       if (vidsrcItems.length > 0) {
+        console.info(`${APP_LOG_PREFIX} Loaded ${vidsrcItems.length} ${type} items from vidsrc (page ${page}).`);
         return { items: vidsrcItems, source: "vidsrc" };
       }
     } catch (error) {
@@ -293,11 +350,17 @@ async function loadNextPage(state, query = "") {
       state.exhausted = true;
       return;
     }
-  };
 
-    state.items = dedupeById([...state.items, ...pageItems]);
+    const prioritizeApiItems = state.page === 1 && source === "tmdb";
+    state.items = prioritizeApiItems
+      ? dedupeById([...pageItems, ...state.items])
+      : dedupeById([...state.items, ...pageItems]);
   } catch (error) {
     state.apiFailed = true;
+    console.error(
+      `${APP_LOG_PREFIX} Unable to load ${state.type} catalog page ${nextPage}. Using available local data.`,
+      error
+    );
   } finally {
     state.loading = false;
   }
@@ -423,5 +486,6 @@ async function initApp() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  logTmdbSetup();
   initApp();
 });
