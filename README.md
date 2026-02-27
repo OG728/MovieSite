@@ -50,3 +50,5 @@ location.reload()
 ```
 
 You can also set `window.CINESTREAM_TMDB_API_KEY` and `window.CINESTREAM_TMDB_BEARER_TOKEN` before loading `app.js`.
+
+You can also manually edit `app.js` at `TMDB_API_KEY` and `TMDB_BEARER_TOKEN` defaults if you prefer hardcoding locally.

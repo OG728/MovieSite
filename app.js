@@ -3,6 +3,9 @@ const TMDB_API_BASE = "https://api.themoviedb.org/3";
 const MAX_PAGES = 25;
 const REQUEST_TIMEOUT_MS = 8000;
 
+// Paste your TMDB credentials here if you want to hardcode them:
+// - TMDB_API_KEY default value (currently empty string)
+// - TMDB_BEARER_TOKEN default value (currently empty string)
 const TMDB_API_KEY =
   window.CINESTREAM_TMDB_API_KEY ||
   window.localStorage.getItem("tmdb_api_key") ||
