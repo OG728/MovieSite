@@ -4,7 +4,7 @@ CineStream is a lightweight, Cineby-inspired browsing interface with:
 
 - A cinematic dark UI
 - Separate pages for `Home`, `Movies`, and `TV Shows`
-- API-driven catalogs (no hardcoded giant movie/TV object lists)
+- Dual-source catalogs: TMDB (when configured) + vidsrc + local seed fallback
 - Dedicated watch pages for playback (`player.html`)
 
 ## Project Structure
@@ -37,3 +37,16 @@ Then open `http://localhost:4173`.
 - Catalog data is fetched from `https://vidsrc.to/vapi` endpoints.
 - Streams come from third-party embeds (`vidsrc.to`) and may be blocked by network/ad-blocking/browser policies.
 - IDs prefer IMDb format for compatibility, with TMDB fallback.
+
+
+## Optional TMDB Configuration
+
+TMDB is not hardcoded in the repo. Set your key in the browser before using TMDB-backed catalog loading:
+
+```js
+localStorage.setItem("tmdb_api_key", "YOUR_TMDB_V3_API_KEY")
+localStorage.setItem("tmdb_bearer_token", "YOUR_TMDB_READ_ACCESS_TOKEN")
+location.reload()
+```
+
+You can also set `window.CINESTREAM_TMDB_API_KEY` and `window.CINESTREAM_TMDB_BEARER_TOKEN` before loading `app.js`.

@@ -1,11 +1,17 @@
-const API_BASE = "https://vidsrc.to/vapi";
+const VIDSRC_API_BASE = "https://vidsrc.to/vapi";
+const TMDB_API_BASE = "https://api.themoviedb.org/3";
 const MAX_PAGES = 25;
 const REQUEST_TIMEOUT_MS = 8000;
 
-const API_TYPE_MAP = {
-  movie: "movie",
-  tv: "tv",
-};
+const TMDB_API_KEY =
+  window.CINESTREAM_TMDB_API_KEY ||
+  window.localStorage.getItem("tmdb_api_key") ||
+  "";
+
+const TMDB_BEARER_TOKEN =
+  window.CINESTREAM_TMDB_BEARER_TOKEN ||
+  window.localStorage.getItem("tmdb_bearer_token") ||
+  "";
 
 const LOCAL_MOVIES = [
   ["Inception", "Dream infiltration thriller.", "tt1375666", 27205, "/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg"],
@@ -78,7 +84,9 @@ function normalizeItem(raw, type) {
   const title = raw.title || raw.name || raw.original_title || raw.original_name;
   const imdbId = raw.imdb_id || raw.imdbId || raw.imdb || null;
   const tmdbId = raw.tmdb_id || raw.tmdbId || raw.id || null;
+
   if (!title || (!imdbId && !tmdbId)) return null;
+
   return {
     title,
     description: raw.overview || raw.description || "No description available.",
@@ -86,6 +94,17 @@ function normalizeItem(raw, type) {
     tmdbId,
     imdbId,
     type,
+  };
+}
+
+
+function getTmdbRequestHeaders() {
+  if (!TMDB_BEARER_TOKEN) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${TMDB_BEARER_TOKEN}`,
   };
 }
 
@@ -97,19 +116,94 @@ function extractListFromResponse(payload) {
   return [];
 }
 
-async function fetchCatalogPage(type, page) {
-  const apiType = API_TYPE_MAP[type];
-  const url = page > 1 ? `${API_BASE}/${apiType}/new/${page}` : `${API_BASE}/${apiType}/new`;
+async function fetchJsonWithTimeout(url) {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
   try {
-    const response = await fetch(url, { signal: controller.signal, cache: "no-store" });
-    if (!response.ok) throw new Error(`Failed to fetch ${type} page ${page} (${response.status})`);
-    const payload = await response.json();
-    return extractListFromResponse(payload).map((item) => normalizeItem(item, type)).filter(Boolean);
+    const response = await fetch(url, {
+      signal: controller.signal,
+      cache: "no-store",
+      headers: url.includes("api.themoviedb.org") ? getTmdbRequestHeaders() : undefined,
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
   } finally {
     window.clearTimeout(timeoutId);
   }
+}
+
+async function fetchFromTmdb(type, page, query = "") {
+  if (!TMDB_API_KEY) {
+    return [];
+  }
+
+  const mediaType = type === "movie" ? "movie" : "tv";
+  const endpoint = query ? `search/${mediaType}` : `discover/${mediaType}`;
+  const params = new URLSearchParams({
+    api_key: TMDB_API_KEY,
+    page: String(page),
+  });
+
+  if (query) {
+    params.set("query", query);
+  } else {
+    params.set("sort_by", "popularity.desc");
+  }
+
+  const payload = await fetchJsonWithTimeout(`${TMDB_API_BASE}/${endpoint}?${params.toString()}`);
+  const list = extractListFromResponse(payload);
+
+  return list
+    .map((item) =>
+      normalizeItem(
+        {
+          id: item.id,
+          tmdb_id: item.id,
+          title: item.title,
+          name: item.name,
+          overview: item.overview,
+          poster_path: item.poster_path,
+          backdrop_path: item.backdrop_path,
+        },
+        type
+      )
+    )
+    .filter(Boolean);
+}
+
+async function fetchFromVidsrc(type, page) {
+  const apiType = type === "movie" ? "movie" : "tv";
+  const url = page > 1 ? `${VIDSRC_API_BASE}/${apiType}/new/${page}` : `${VIDSRC_API_BASE}/${apiType}/new`;
+  const payload = await fetchJsonWithTimeout(url);
+  const list = extractListFromResponse(payload);
+  return list.map((item) => normalizeItem(item, type)).filter(Boolean);
+}
+
+async function fetchCatalogPage(type, page, query = "") {
+  const errors = [];
+
+  try {
+    const tmdbItems = await fetchFromTmdb(type, page, query);
+    if (tmdbItems.length > 0) {
+      return { items: tmdbItems, source: "tmdb" };
+    }
+  } catch (error) {
+    errors.push(`tmdb:${error?.message || "unknown"}`);
+  }
+
+  if (!query) {
+    try {
+      const vidsrcItems = await fetchFromVidsrc(type, page);
+      if (vidsrcItems.length > 0) {
+        return { items: vidsrcItems, source: "vidsrc" };
+      }
+    } catch (error) {
+      errors.push(`vidsrc:${error?.message || "unknown"}`);
+    }
+  }
+
+  throw new Error(errors.join(" | ") || "No sources returned data");
 }
 
 function buildMediaCard(item, template) {
@@ -119,7 +213,10 @@ function buildMediaCard(item, template) {
   const poster = node.querySelector(".poster");
   const watchLink = node.querySelector(".watch-link");
   const posterButton = node.querySelector(".poster-button");
-  if (!title || !description || !poster || !watchLink || !posterButton) return node;
+
+  if (!title || !description || !poster || !watchLink || !posterButton) {
+    return node;
+  }
 
   const watchUrl = buildWatchPageUrl(item.type, item);
   title.textContent = item.title;
@@ -127,9 +224,19 @@ function buildMediaCard(item, template) {
   poster.src = item.poster;
   poster.alt = `${item.title} poster`;
   watchLink.href = watchUrl;
+
+  if (!getExternalId(item)) {
+    watchLink.textContent = "ID unavailable for playback";
+    watchLink.removeAttribute("href");
+    watchLink.setAttribute("aria-disabled", "true");
+    posterButton.disabled = true;
+    return node;
+  }
+
   posterButton.addEventListener("click", () => {
     window.location.href = watchUrl;
   });
+
   return node;
 }
 
@@ -148,7 +255,7 @@ function filterItems(items, query) {
 function dedupeById(items) {
   const seen = new Set();
   return items.filter((item) => {
-    const key = `${item.type}:${item.imdbId || item.tmdbId}`;
+    const key = `${item.type}:${item.imdbId || item.tmdbId || item.title}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -157,21 +264,34 @@ function dedupeById(items) {
 
 function createCatalogState(type) {
   const seed = type === "movie" ? seedToItems(LOCAL_MOVIES, "movie") : seedToItems(LOCAL_TV, "tv");
-  return { type, page: 0, exhausted: false, loading: false, items: seed, apiFailed: false };
+  return {
+    type,
+    page: 0,
+    exhausted: false,
+    loading: false,
+    items: seed,
+    source: "local",
+    apiFailed: false,
+  };
 }
 
-async function loadNextPage(state) {
-  if (state.loading || state.exhausted || state.apiFailed || state.page >= MAX_PAGES) return;
+async function loadNextPage(state, query = "") {
+  if (state.loading || state.exhausted || state.page >= MAX_PAGES) return;
 
   state.loading = true;
   const nextPage = state.page + 1;
+
   try {
-    const pageItems = await fetchCatalogPage(state.type, nextPage);
+    const { items: pageItems, source } = await fetchCatalogPage(state.type, nextPage, query);
     state.page = nextPage;
+    state.source = source;
+
     if (pageItems.length === 0) {
       state.exhausted = true;
       return;
     }
+  };
+
     state.items = dedupeById([...state.items, ...pageItems]);
   } catch {
     state.apiFailed = true;
@@ -181,26 +301,37 @@ async function loadNextPage(state) {
 }
 
 async function ensureSearchCoverage(state, query) {
-  if (!query || state.apiFailed) return;
+  if (!query || state.page >= MAX_PAGES) return;
+
   let filtered = filterItems(state.items, query);
-  while (filtered.length < 18 && !state.exhausted && !state.apiFailed && state.page < MAX_PAGES) {
-    await loadNextPage(state);
+  while (filtered.length < 18 && !state.exhausted && state.page < MAX_PAGES) {
+    await loadNextPage(state, query);
+
+    if (state.apiFailed) {
+      break;
+    }
+
     filtered = filterItems(state.items, query);
   }
 }
 
 function updateLoadMoreButton(button, state) {
   if (!button) return;
-  button.disabled = state.loading || state.exhausted || state.apiFailed;
-  if (state.apiFailed) {
-    button.textContent = "API unavailable";
-  } else if (state.exhausted) {
+  button.disabled = state.loading || state.exhausted;
+
+  if (state.exhausted) {
     button.textContent = "No more results";
   } else if (state.loading) {
     button.textContent = "Loading…";
   } else {
     button.textContent = "Load more";
   }
+}
+
+function sourceLabel(state) {
+  if (state.source === "tmdb") return "TMDB";
+  if (state.source === "vidsrc") return "vidsrc";
+  return "local";
 }
 
 async function initHomePage(template, statusEl, searchEl) {
@@ -216,11 +347,7 @@ async function initHomePage(template, statusEl, searchEl) {
     const latestTv = filterItems(tvState.items, query).slice(0, 8);
     renderList(latestMovies, latestMoviesGrid, template);
     renderList(latestTv, latestTvGrid, template);
-    if (movieState.apiFailed && tvState.apiFailed) {
-      statusEl.textContent = `Showing local catalog: ${latestMovies.length} movies and ${latestTv.length} TV shows.`;
-    } else {
-      statusEl.textContent = `Home: ${latestMovies.length} latest movie${latestMovies.length === 1 ? "" : "s"} and ${latestTv.length} latest TV show${latestTv.length === 1 ? "" : "s"}.`;
-    }
+    statusEl.textContent = `Home: ${latestMovies.length} movies + ${latestTv.length} TV shows (source: ${sourceLabel(movieState)}/${sourceLabel(tvState)}).`;
   };
 
   render("");
@@ -243,15 +370,11 @@ async function initSingleTypePage(type, gridId, template, statusEl, searchEl, lo
   const render = (query) => {
     const filtered = filterItems(state.items, query);
     renderList(filtered, grid, template);
-    const label = type === "movie" ? "movie" : "TV show";
 
-    if (state.apiFailed) {
-      statusEl.textContent = `API unavailable. Showing local ${label} catalog (${filtered.length} shown).`;
-    } else {
-      statusEl.textContent = filtered.length
-        ? `Showing ${filtered.length} ${label}${filtered.length === 1 ? "" : "s"}. Loaded ${state.items.length} total.`
-        : `No ${label} matches found.`;
-    }
+    const label = type === "movie" ? "movie" : "TV show";
+    statusEl.textContent = filtered.length
+      ? `Showing ${filtered.length} ${label}${filtered.length === 1 ? "" : "s"}. Loaded ${state.items.length}. Source: ${sourceLabel(state)}${state.apiFailed ? " (API issue, local still active)" : ""}.`
+      : `No ${label} matches found.`;
 
     updateLoadMoreButton(loadMoreButton, state);
   };
@@ -268,7 +391,7 @@ async function initSingleTypePage(type, gridId, template, statusEl, searchEl, lo
 
   if (loadMoreButton) {
     loadMoreButton.addEventListener("click", async () => {
-      await loadNextPage(state);
+      await loadNextPage(state, searchEl.value.trim().toLowerCase());
       render(searchEl.value.trim().toLowerCase());
     });
   }
@@ -280,16 +403,19 @@ async function initApp() {
   const searchEl = document.getElementById("search");
   const statusEl = document.getElementById("status");
   const loadMoreButton = document.getElementById("load-more");
+
   if (!page || !template || !template.content.firstElementChild || !searchEl || !statusEl) return;
 
   if (page === "movies") {
     await initSingleTypePage("movie", "movies-grid", template, statusEl, searchEl, loadMoreButton);
     return;
   }
+
   if (page === "tv") {
     await initSingleTypePage("tv", "tv-grid", template, statusEl, searchEl, loadMoreButton);
     return;
   }
+
   await initHomePage(template, statusEl, searchEl);
 }
 
