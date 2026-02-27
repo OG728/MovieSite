@@ -5,16 +5,20 @@ const REQUEST_TIMEOUT_MS = 8000;
 
 const APP_LOG_PREFIX = "[CineStream]";
 
-// Paste your TMDB credentials here if you want to hardcode them:
-// - TMDB_API_KEY default value (currently empty string)
-// - TMDB_BEARER_TOKEN default value (currently empty string)
+// Optional: paste TMDB credentials directly in these constants.
+// This is useful if you do not want to set window vars/localStorage manually.
+const HARDCODED_TMDB_API_KEY = "";
+const HARDCODED_TMDB_BEARER_TOKEN = "";
+
 const TMDB_API_KEY =
   window.CINESTREAM_TMDB_API_KEY ||
+  HARDCODED_TMDB_API_KEY ||
   window.localStorage.getItem("tmdb_api_key") ||
   "";
 
 const TMDB_BEARER_TOKEN =
   window.CINESTREAM_TMDB_BEARER_TOKEN ||
+  HARDCODED_TMDB_BEARER_TOKEN ||
   window.localStorage.getItem("tmdb_bearer_token") ||
   "";
 
@@ -115,6 +119,23 @@ function getTmdbRequestHeaders() {
 
 function hasTmdbCredentials() {
   return Boolean(TMDB_API_KEY || TMDB_BEARER_TOKEN);
+}
+
+function logTmdbSetup() {
+  if (!hasTmdbCredentials()) {
+    console.warn(
+      `${APP_LOG_PREFIX} TMDB is not configured. Set window.CINESTREAM_TMDB_API_KEY, window.CINESTREAM_TMDB_BEARER_TOKEN, localStorage keys (tmdb_api_key/tmdb_bearer_token), or HARDCODED_TMDB_* constants.`
+    );
+    return;
+  }
+
+  if (TMDB_API_KEY) {
+    console.info(`${APP_LOG_PREFIX} TMDB API key detected.`);
+  }
+
+  if (TMDB_BEARER_TOKEN) {
+    console.info(`${APP_LOG_PREFIX} TMDB bearer token detected.`);
+  }
 }
 
 function extractListFromResponse(payload) {
@@ -330,7 +351,10 @@ async function loadNextPage(state, query = "") {
       return;
     }
 
-    state.items = dedupeById([...state.items, ...pageItems]);
+    const prioritizeApiItems = state.page === 1 && source === "tmdb";
+    state.items = prioritizeApiItems
+      ? dedupeById([...pageItems, ...state.items])
+      : dedupeById([...state.items, ...pageItems]);
   } catch (error) {
     state.apiFailed = true;
     console.error(
@@ -462,5 +486,6 @@ async function initApp() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  logTmdbSetup();
   initApp();
 });
