@@ -1,45 +1,39 @@
 # CineStream
 
-CineStream is a lightweight, Cineby-inspired movie browsing interface with:
+CineStream is a lightweight, Cineby-inspired browsing interface with:
 
 - A cinematic dark UI
-- A searchable movie grid
-- Embedded playback via `vidsrc.to` iframe links
+- Separate pages for `Home`, `Movies`, and `TV Shows`
+- API-driven catalogs (no hardcoded giant movie/TV object lists)
+- Dedicated watch pages for playback (`player.html`)
 
 ## Project Structure
 
-- `index.html` – page structure and template for movie cards
-- `styles.css` – visual styling and responsive layout
-- `app.js` – movie data, render logic, search filtering, and embed URL building
+- `index.html` – Home page with latest movies and latest TV shows
+- `movies.html` – Movies-only page (API + search + load more)
+- `tv.html` – TV-shows-only page (API + search + load more)
+- `player.html` – dedicated player page for a selected movie/show
+- `styles.css` – styling for catalog and player layouts
+- `app.js` – procedural API fetching, normalization, rendering, search, pagination
+- `player.js` – player-page URL parsing and embed setup
 
 ## How to Run Locally
-
-Because this is a static site, you can run it with any basic local web server.
-
-### Option 1: Python (recommended)
 
 ```bash
 python3 -m http.server 4173
 ```
 
-Then open:
-
-- `http://localhost:4173`
-
-### Option 2: VS Code Live Server
-
-1. Open this folder in VS Code.
-2. Install the **Live Server** extension (if needed).
-3. Right-click `index.html` and choose **Open with Live Server**.
+Then open `http://localhost:4173`.
 
 ## Usage
 
-1. Open the site in your browser.
-2. Use the search bar to filter movies by title or description.
-3. Click play on any embedded player card.
+1. Open the site.
+2. Use the top nav to go to **Home**, **Movies**, or **TV Shows**.
+3. Movies/TV pages fetch entries procedurally from the API and allow searching + loading more pages.
+4. Click a poster or "Open watch page" to open the dedicated player page.
 
 ## Notes
 
-- Subtitle/caption availability depends on the upstream stream source inside vidsrc embeds.
-- Some networks/browsers may block third-party embeds depending on policy settings.
-
+- Catalog data is fetched from `https://vidsrc.to/vapi` endpoints.
+- Streams come from third-party embeds (`vidsrc.to`) and may be blocked by network/ad-blocking/browser policies.
+- IDs prefer IMDb format for compatibility, with TMDB fallback.
