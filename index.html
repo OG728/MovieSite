@@ -40,27 +40,17 @@
             <iframe
               class="movie-frame"
               loading="lazy"
-              referrerpolicy="origin"
-
-              allow="autoplay; fullscreen; picture-in-picture"
-=======
-
+              referrerpolicy="origin-when-cross-origin"
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
               allowfullscreen
               title="Movie player"
             ></iframe>
           </div>
-
           <a class="open-player" target="_blank" rel="noopener noreferrer">Open player in new tab</a>
-=======
-
         </div>
       </article>
     </template>
 
-
     <script src="app.js" defer></script>
-=======
-    <script src="app.js" type="module"></script>
-
   </body>
 </html>
