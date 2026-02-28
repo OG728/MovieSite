@@ -1,21 +1,20 @@
 # CineStream
 
-CineStream is a lightweight, movie browsing interface with:
+CineStream is a lightweight movie/TV browsing interface with:
 
 - A cinematic dark UI
-- Separate pages for `Home`, `Movies`, and `TV Shows`
+- A `Home` page and `Search` page for discovering content
 - Dual-source catalogs: TMDB (when configured) + vidsrc + local seed fallback
-- Dedicated watch pages for playback (`player.html`)
+- A dedicated watch page (`player.html`) for playback
 
 ## Project Structure
 
-- `index.html` – Home page with latest movies and latest TV shows
-- `movies.html` – Movies-only page (API + search + load more)
-- `tv.html` – TV-shows-only page (API + search + load more)
-- `player.html` – dedicated player page for a selected movie/show
-- `styles.css` – styling for catalog and player layouts
-- `app.js` – procedural API fetching, normalization, rendering, search, pagination
-- `player.js` – player-page URL parsing and embed setup
+- `index.html` - Home page with hero slideshow, latest movies, and latest TV shows
+- `search.html` - Search page for movies and TV shows
+- `player.html` - Player page for the selected movie/show
+- `styles.css` - Shared styles for home, search, player, and TV episode controls
+- `app.js` - Catalog fetching, normalization, rendering, search, and hero slideshow logic
+- `player.js` - Player URL parsing, embed setup, and TV season/episode controls
 
 ## How to Run Locally
 
@@ -25,13 +24,13 @@ python3 -m http.server 4173
 
 Then open `http://localhost:4173`.
 
-
 ## Usage
 
 1. Open the site.
-2. Use the top nav to go to **Home**, **Movies**, or **TV Shows**.
-3. Movies/TV pages fetch entries procedurally from the API and allow searching + loading more pages.
-4. Click a poster or "Open watch page" to open the dedicated player page.
+2. Use the top nav to go to **Home** or **Search**.
+3. Browse or search entries fetched from API/local fallback sources.
+4. Click a poster to open the dedicated player page.
+5. For TV shows, use the season dropdown and episode buttons on the player page.
 
 ## Notes
 
@@ -39,10 +38,9 @@ Then open `http://localhost:4173`.
 - Streams come from third-party embeds (`vidsrc.to`) and may be blocked by network/ad-blocking/browser policies.
 - IDs prefer IMDb format for compatibility, with TMDB fallback.
 
-
 ## Optional TMDB Configuration
 
-TMDB is not hardcoded in the repo. Set your key in the browser before using TMDB-backed catalog loading:
+Set TMDB credentials in the browser before using TMDB-backed catalog loading:
 
 ```js
 localStorage.setItem("tmdb_api_key", "YOUR_TMDB_V3_API_KEY")
@@ -52,4 +50,4 @@ location.reload()
 
 You can also set `window.CINESTREAM_TMDB_API_KEY` and `window.CINESTREAM_TMDB_BEARER_TOKEN` before loading `app.js`.
 
-You can also manually edit `app.js` at `TMDB_API_KEY` and `TMDB_BEARER_TOKEN` defaults if you prefer hardcoding locally.
+You can also manually edit `app.js` defaults if you prefer hardcoding locally.
