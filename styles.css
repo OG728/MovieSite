@@ -534,6 +534,79 @@ main {
   color: var(--muted);
 }
 
+.tv-controls {
+  margin-top: 0.8rem;
+  background: color-mix(in srgb, var(--panel) 92%, #162033);
+  border: 1px solid color-mix(in srgb, var(--border) 75%, #3a3a3a);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.tv-controls-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin-bottom: 0.8rem;
+}
+
+.tv-controls-header label {
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.season-select {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  min-width: 140px;
+  background: color-mix(in srgb, var(--panel-soft) 90%, black);
+  color: var(--text);
+  padding: 0.5rem 0.7rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.episode-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.58rem;
+}
+
+.episode-button {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--panel-soft) 88%, black);
+  color: var(--text);
+  padding: 0.62rem 0.72rem;
+  text-align: left;
+  cursor: pointer;
+  line-height: 1.25;
+  font: inherit;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+
+.episode-button:hover,
+.episode-button:focus-visible {
+  border-color: #8a8a8a;
+  background: color-mix(in srgb, var(--panel-soft) 96%, #141414);
+  transform: translateY(-1px);
+}
+
+.episode-button.is-active {
+  border-color: #b8b8b8;
+  background: color-mix(in srgb, var(--panel-soft) 98%, #0c0c0c);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+}
+
+.tv-controls-status {
+  margin: 0.4rem 0 0;
+  font-size: 0.95rem;
+  opacity: 0.92;
+  color: var(--muted);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -574,6 +647,28 @@ main {
 
   .poster-wrap {
     height: 240px;
+  }
+
+  .tv-controls {
+    padding: 0.8rem;
+  }
+
+  .tv-controls-header {
+    align-items: center;
+  }
+
+  .season-select {
+    min-width: 120px;
+  }
+
+  .episode-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .episode-list {
+    grid-template-columns: 1fr;
   }
 }
 @font-face {

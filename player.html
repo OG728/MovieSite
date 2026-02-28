@@ -21,7 +21,7 @@
     </header>
 
     <main class="player-page">
-      <p class="breadcrumbs"><a href="index.html">Home</a> / <span id="crumb-type">Movie</span> / <span id="crumb-title">Loading…</span></p>
+      <p class="breadcrumbs"><a href="index.html">Home</a> / <span id="crumb-type">Movie</span> / <span id="crumb-title">Loading...</span></p>
       <p class="player-warning">
         Some ad blockers may block streams. If you get an error while trying to play, refresh or try the open-player link below.
       </p>
@@ -36,11 +36,19 @@
           title="Movie player"
         ></iframe>
       </section>
+
       <div class="player-meta">
-        <h1 id="player-title">Loading…</h1>
+        <h1 id="player-title">Loading...</h1>
         <p id="player-description"></p>
+        <section id="tv-controls" class="tv-controls" hidden>
+          <div class="tv-controls-header">
+            <label for="season-select">Season</label>
+            <select id="season-select" class="season-select"></select>
+          </div>
+          <div id="episode-list" class="episode-list"></div>
+          <p id="tv-controls-status" class="tv-controls-status" hidden></p>
+        </section>
         <a id="open-player-link" class="watch-link" target="_blank" rel="noopener noreferrer">Open player in new tab</a>
-    </div>
       </div>
     </main>
 
